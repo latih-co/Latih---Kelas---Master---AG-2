@@ -2,5 +2,4 @@
 deployment:
   tasks:
     - export DEPLOYPATH=/home/latn7614/public_html/
-    - /bin/cp -R * $DEPLOYPATH
-    
+    - /bin/cp -R dist/* $DEPLOYPATH
