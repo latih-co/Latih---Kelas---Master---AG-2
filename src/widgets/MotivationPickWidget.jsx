@@ -1,0 +1,1 @@
+export default function MotivationPickWidget() { return <div style={{padding: 20, background: '#fee', color: '#c00', borderRadius: 8}}>?? Widget MotivationPickWidget is under reconstruction ??</div>; }

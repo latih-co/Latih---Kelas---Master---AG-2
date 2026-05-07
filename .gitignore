@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment variables — JANGAN di-commit!
+.env
+.env.local
+.env.production
+
+# Vercel
+.vercel/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Script helpers (tidak perlu di repo)
+fix-*.cjs
+inject-*.cjs
+patch_slides.*
+tmp-*.cjs
+tmp-*.js
+tmp_insert.cjs
+insert.py
+sublesson.json
+scripts/
+
+# Logs
+*.log
+npm-debug.log*
