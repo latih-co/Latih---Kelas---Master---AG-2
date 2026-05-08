@@ -1,5 +1,5 @@
 import React from 'react';
-import { categories, COLORS } from "../data/courses";
+import { categories } from "../data/courses";
 import { useIsMobile } from "../utils/mobile";
 import { Play } from 'lucide-react';
 
@@ -34,19 +34,16 @@ export default function BerandaScreen({
   completedQuizzes = {}
 }) {
   const isMobile = useIsMobile();
-
-  // Fallback: first available topic/sub-lesson if nothing was studied yet
-  const fallbackTopic = categories.flatMap(c => c.topics).find(t => !t.comingSoon && t.lessons?.length > 0);
-  const fallbackSubLesson = fallbackTopic?.lessons?.[0]?.subLessons?.[0] ?? null;
-
-  const displayTopic     = lastStudiedTopic     || fallbackTopic;
-  const displaySubLesson = lastStudiedSubLesson  || fallbackSubLesson;
-
-  const parentCategory = categories.find(c => c.topics.some(t => t.id === displayTopic?.id));
-  const parentLesson   = displayTopic?.lessons?.find(l => l.subLessons?.some(s => s.id === displaySubLesson?.id));
-  const displayName    = userName || "Pengguna";
-
+  const hasHistory = !!(lastStudiedTopic && lastStudiedSubLesson);
+  const displayName = userName || 'Pengguna';
   const nudge = getNudge(streak, xp);
+
+  const parentCategory = hasHistory
+    ? categories.find(c => c.topics.some(t => t.id === lastStudiedTopic.id))
+    : null;
+  const parentLesson = hasHistory
+    ? lastStudiedTopic.lessons?.find(l => l.subLessons?.some(s => s.id === lastStudiedSubLesson.id))
+    : null;
 
   return (
     <div style={{ padding: isMobile ? "20px 16px 32px" : "24px 32px 32px", fontFamily: "'Inter', sans-serif" }}>
@@ -58,7 +55,9 @@ export default function BerandaScreen({
             {getGreeting()}, {displayName}! 👋
           </h1>
           <div style={{ fontSize: 13, color: 'var(--c-muted)', fontWeight: 500 }}>
-            Yuk lanjutkan perjalanan belajarmu hari ini
+            {hasHistory
+              ? 'Yuk lanjutkan perjalanan belajarmu hari ini'
+              : 'Selamat datang di Latih+ — mulai perjalanan belajarmu!'}
           </div>
         </div>
 
@@ -74,7 +73,7 @@ export default function BerandaScreen({
       </div>
 
       {/* Smart Nudge Banner */}
-      <div style={{ backgroundColor: nudge.bg, border: `1px solid ${nudge.border}`, borderRadius: 16, padding: '14px 20px', display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20, animation: 'fadeInDown 0.4s ease' }}>
+      <div style={{ backgroundColor: nudge.bg, border: `1px solid ${nudge.border}`, borderRadius: 16, padding: '14px 20px', display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
         <div style={{ fontSize: 28, flexShrink: 0 }}>{nudge.emoji}</div>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 14, fontWeight: 800, color: nudge.color, marginBottom: 2 }}>{nudge.title}</div>
@@ -82,18 +81,15 @@ export default function BerandaScreen({
         </div>
       </div>
 
-      {/* ── Sedang Kamu Pelajari Card ───────────────────────────── */}
-      {displayTopic && displaySubLesson && (
+      {/* ── Sedang Kamu Pelajari (hanya jika ada histori belajar) ── */}
+      {hasHistory ? (
         <div style={{ backgroundColor: 'white', borderRadius: 22, padding: 24, boxShadow: '0 4px 20px rgba(0,0,0,0.03)', marginBottom: 20 }}>
-
-          {/* Card header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
             <h3 style={{ fontSize: 20, fontWeight: 800, color: 'var(--c-dark)', margin: 0 }}>
               Sedang Kamu Pelajari
             </h3>
             <div
-              role="button"
-              tabIndex={0}
+              role="button" tabIndex={0}
               style={{ fontSize: 13, fontWeight: 700, color: 'var(--c-teal-dark)', cursor: 'pointer' }}
               onClick={() => onGoToCourses && onGoToCourses()}
               onKeyDown={e => e.key === 'Enter' && onGoToCourses && onGoToCourses()}
@@ -102,7 +98,6 @@ export default function BerandaScreen({
             </div>
           </div>
 
-          {/* Card body */}
           <div style={{
             display: 'flex', flexDirection: isMobile ? 'column' : 'row',
             alignItems: isMobile ? 'stretch' : 'center',
@@ -111,44 +106,38 @@ export default function BerandaScreen({
             border: '1px solid #EAF0F6', backgroundColor: 'var(--surf-2)',
             gap: 16
           }}>
-            {/* Left: icon + text */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 16, flex: 1, minWidth: 0 }}>
               <div style={{
                 width: 48, height: 48, borderRadius: 12, flexShrink: 0,
-                backgroundColor: displayTopic.color || '#0F766E',
+                backgroundColor: lastStudiedTopic.color || '#0F766E',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 22, boxShadow: '0 2px 8px rgba(0,0,0,0.12)'
               }}>
-                {displayTopic.icon || '📋'}
+                {lastStudiedTopic.icon || '📋'}
               </div>
-
               <div style={{ flex: 1, minWidth: 0 }}>
-                {/* Category */}
                 <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--c-teal-dark)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
                   {parentCategory?.title || 'Kursus'}
                 </div>
-                {/* Topic */}
                 <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--c-dark)', lineHeight: 1.3, marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {displayTopic.title}
+                  {lastStudiedTopic.title}
                 </div>
-                {/* Sub-lesson */}
                 {parentLesson && (
                   <div style={{ fontSize: 11, color: 'var(--c-muted)', fontWeight: 500, marginBottom: 8, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {parentLesson.title} · {displaySubLesson.title}
+                    {parentLesson.title} · {lastStudiedSubLesson.title}
                   </div>
                 )}
-                {/* Progress bar */}
                 <div style={{ width: '100%', maxWidth: 220 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <div style={{ marginBottom: 4 }}>
                     <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--c-muted)' }}>
-                      {completedQuizzes[displaySubLesson.id] ? 'Sub-lesson selesai ✓' : 'Sedang berjalan'}
+                      {completedQuizzes[lastStudiedSubLesson.id] ? 'Sub-lesson selesai ✓' : 'Sedang berjalan'}
                     </span>
                   </div>
                   <div style={{ height: 6, backgroundColor: 'var(--surf-3)', borderRadius: 3, overflow: 'hidden' }}>
                     <div style={{
-                      width: completedQuizzes[displaySubLesson.id] ? '100%' : '40%',
+                      width: completedQuizzes[lastStudiedSubLesson.id] ? '100%' : '40%',
                       height: '100%',
-                      backgroundColor: displayTopic.color || 'var(--c-teal)',
+                      backgroundColor: lastStudiedTopic.color || 'var(--c-teal)',
                       borderRadius: 3, transition: 'width 0.6s ease'
                     }} />
                   </div>
@@ -156,9 +145,8 @@ export default function BerandaScreen({
               </div>
             </div>
 
-            {/* Right: CTA */}
             <button
-              onClick={() => onSelectLesson && onSelectLesson(displaySubLesson)}
+              onClick={() => onSelectLesson && onSelectLesson(lastStudiedSubLesson)}
               style={{
                 backgroundColor: 'var(--c-dark)', color: 'white', border: 'none',
                 borderRadius: 10, padding: '10px 18px',
@@ -172,9 +160,41 @@ export default function BerandaScreen({
               onMouseLeave={e => e.currentTarget.style.backgroundColor = 'var(--c-dark)'}
             >
               <Play size={14} fill="white" />
-              {completedQuizzes[displaySubLesson.id] ? 'Ulang Pelajaran' : 'Lanjut Belajar'}
+              {completedQuizzes[lastStudiedSubLesson.id] ? 'Ulang Pelajaran' : 'Lanjut Belajar'}
             </button>
           </div>
+        </div>
+
+      ) : (
+        /* ── Empty state untuk user baru ── */
+        <div style={{
+          backgroundColor: 'white', borderRadius: 22,
+          padding: isMobile ? '28px 20px' : '36px 32px',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+          marginBottom: 20, textAlign: 'center',
+        }}>
+          <div style={{ fontSize: 52, marginBottom: 14 }}>🚀</div>
+          <h3 style={{ fontSize: 18, fontWeight: 800, color: 'var(--c-dark)', margin: '0 0 8px' }}>
+            Belum ada modul yang dipelajari
+          </h3>
+          <p style={{ fontSize: 13, color: '#64748B', margin: '0 0 22px', lineHeight: 1.7, maxWidth: 360, marginLeft: 'auto', marginRight: 'auto' }}>
+            Yuk mulai belajar! Pilih topik yang sesuai dengan bidang kerjamu dan kembangkan skill industri kamu hari ini.
+          </p>
+          <button
+            onClick={() => onGoToCourses && onGoToCourses()}
+            style={{
+              backgroundColor: 'var(--c-dark)', color: 'white', border: 'none',
+              borderRadius: 10, padding: '12px 28px',
+              fontSize: 14, fontWeight: 700, cursor: 'pointer',
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              transition: 'background-color 0.15s ease',
+            }}
+            onMouseEnter={e => e.currentTarget.style.backgroundColor = '#334155'}
+            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'var(--c-dark)'}
+          >
+            <Play size={14} fill="white" />
+            Mulai Belajar Sekarang
+          </button>
         </div>
       )}
     </div>
