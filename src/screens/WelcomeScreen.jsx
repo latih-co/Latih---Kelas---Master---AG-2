@@ -55,19 +55,19 @@ export default function WelcomeScreen({ userName, onChoose }) {
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '32px 20px',
+      padding: '24px 20px',
     }}>
       <div style={{ width: '100%', maxWidth: 760 }}>
 
-        {/* Logo */}
-        <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <img src={LogoWarna} alt="Latih" style={{ height: 32, objectFit: 'contain', marginBottom: 24 }} />
+        {/* Logo + Greeting — center aligned */}
+        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+          <img src={LogoWarna} alt="Latih" style={{ height: 30, objectFit: 'contain', marginBottom: 16 }} />
 
           {/* Badge */}
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 6,
             background: '#F0FDF4', border: '1px solid #BBF7D0',
-            borderRadius: 99, padding: '5px 14px', marginBottom: 18,
+            borderRadius: 99, padding: '5px 14px', marginBottom: 14,
           }}>
             <span style={{ fontSize: 13 }}>🎉</span>
             <span style={{ fontSize: 11, fontWeight: 700, color: '#15803D', letterSpacing: '0.06em' }}>
@@ -76,25 +76,25 @@ export default function WelcomeScreen({ userName, onChoose }) {
           </div>
 
           <h1 style={{
-            color: '#0F172A', fontSize: 'clamp(22px, 4vw, 32px)',
-            fontWeight: 900, margin: '0 0 10px', letterSpacing: '-0.5px', lineHeight: 1.2,
+            color: '#0F172A', fontSize: 'clamp(20px, 4vw, 30px)',
+            fontWeight: 900, margin: '0 0 8px', letterSpacing: '-0.5px', lineHeight: 1.2,
           }}>
             Halo, {userName || 'Profesional'}! 👋
           </h1>
-          <p style={{ color: '#64748B', fontSize: 15, margin: 0, lineHeight: 1.6 }}>
+          <p style={{ color: '#64748B', fontSize: 14, margin: 0, lineHeight: 1.6 }}>
             Pilih cara belajar yang sesuai dengan kebutuhanmu hari ini.
           </p>
         </div>
 
         {/* Divider */}
-        <div style={{ height: 1, background: '#F1F5F9', marginBottom: 28 }} />
+        <div style={{ height: 1, background: '#F1F5F9', marginBottom: 20 }} />
 
         {/* Cards */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
-          gap: 16,
-          marginBottom: 32,
+          gap: 14,
+          marginBottom: 20,
         }}>
           {PATHS.map((path) => {
             const isHovered = hovered === path.id;
