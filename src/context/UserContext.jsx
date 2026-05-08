@@ -49,10 +49,11 @@ export function UserProvider({ children }) {
           authUser?.user?.user_metadata?.name ||
           authUser?.user?.email?.split('@')[0] ||
           'Pengguna';
+        const authEmail = authUser?.user?.email || null;
 
         const { data: newProfile, error: createErr } = await supabase
           .from('profiles')
-          .insert({ id: userId, name: fallbackName })
+          .insert({ id: userId, name: fallbackName, email: authEmail })
           .select()
           .single();
 
@@ -63,6 +64,15 @@ export function UserProvider({ children }) {
       }
 
       if (data) {
+        // Sync email dari auth ke profiles jika belum ada
+        if (!data.email) {
+          const { data: authUser } = await supabase.auth.getUser();
+          const authEmail = authUser?.user?.email;
+          if (authEmail) {
+            await supabase.from('profiles').update({ email: authEmail }).eq('id', userId);
+            data = { ...data, email: authEmail };
+          }
+        }
         setUser(data);
         setXp(data.xp || 0);
         setStreak(initStreakFromStorage());
@@ -86,6 +96,11 @@ export function UserProvider({ children }) {
     // Dengarkan perubahan auth (login/logout)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
+        // Jika email belum dikonfirmasi, abaikan session agar user tetap di halaman verifikasi
+        if (session && !session.user.email_confirmed_at) {
+          setLoading(false);
+          return;
+        }
         setSession(session);
         if (session) {
           loadProfile(session.user.id);
@@ -137,6 +152,11 @@ export function UserProvider({ children }) {
     return { error };
   };
 
+  const resendVerification = async (email) => {
+    const { error } = await supabase.auth.resend({ type: 'signup', email });
+    return { error };
+  };
+
   const signUp = async (email, password, name, jobRole) => {
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -144,13 +164,17 @@ export function UserProvider({ children }) {
       options: { data: { name } }, // trigger auto-create profile pakai nama ini
     });
     if (!error && data.user) {
-      // Update job_role dan nama ke tabel profiles
-      await supabase
-        .from('profiles')
-        .update({ name, job_role: jobRole })
-        .eq('id', data.user.id);
+      // Update job_role & nama — email kolom opsional (mungkin belum ada di DB)
+      try {
+        await supabase
+          .from('profiles')
+          .update({ name, job_role: jobRole })
+          .eq('id', data.user.id);
+      } catch (_) { /* abaikan — profile akan dibuat oleh trigger */ }
     }
-    return { data, error };
+    // needsVerification = true artinya email confirmation required (session null)
+    const needsVerification = !error && !data?.session;
+    return { data, error, needsVerification };
   };
 
   const signOut = async () => {
@@ -185,6 +209,7 @@ export function UserProvider({ children }) {
     signUp,
     signOut,
     updateProfile,
+    resendVerification,
   };
 
   return (

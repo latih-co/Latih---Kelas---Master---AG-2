@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   id          UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   name        TEXT NOT NULL DEFAULT 'Pengguna Baru',
   job_role    TEXT,
+  email       TEXT,  -- disimpan dari auth.users untuk keperluan admin
   xp          INT  NOT NULL DEFAULT 0,
   streak      INT  NOT NULL DEFAULT 0,
   last_active DATE,

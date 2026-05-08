@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useUser } from '../../context/UserContext';
 import LogoWarna from '../../assets/Logo Latih Warna.png';
 
@@ -9,7 +9,7 @@ const JOB_ROLES = [
 ];
 
 export default function RegisterScreen({ onNavigate }) {
-  const { signUp } = useUser();
+  const { signUp, resendVerification } = useUser();
   const [step, setStep]         = useState(1);
   const [name, setName]         = useState('');
   const [jobRole, setJobRole]   = useState('');
@@ -20,6 +20,16 @@ export default function RegisterScreen({ onNavigate }) {
   const [error, setError]       = useState('');
   const [showPass, setShowPass] = useState(false);
 
+  // Resend countdown
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendMsg, setResendMsg]           = useState('');
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const t = setTimeout(() => setResendCooldown(c => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendCooldown]);
+
   const handleStep1 = (e) => {
     e.preventDefault();
     if (!name.trim()) { setError('Nama lengkap wajib diisi.'); return; }
@@ -29,15 +39,42 @@ export default function RegisterScreen({ onNavigate }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!email)              { setError('Email wajib diisi.'); return; }
-    if (password.length < 8) { setError('Password minimal 8 karakter.'); return; }
-    if (password !== confirm) { setError('Password dan konfirmasi tidak cocok.'); return; }
+    if (!email)               { setError('Email wajib diisi.'); return; }
+    if (password.length < 8)  { setError('Password minimal 8 karakter.'); return; }
+    if (password !== confirm)  { setError('Password dan konfirmasi tidak cocok.'); return; }
     setLoading(true); setError('');
-    const { error } = await signUp(email, password, name, jobRole);
-    setLoading(false);
+    try {
+      const { error, needsVerification } = await signUp(email, password, name, jobRole);
+      setLoading(false);
+      if (error) {
+        if (error.message.includes('already registered') || error.message.includes('User already registered')) {
+          setError('Email ini sudah terdaftar. Silakan masuk.');
+        } else {
+          setError(error.message || 'Terjadi kesalahan. Coba lagi.');
+        }
+      } else if (needsVerification) {
+        // Email confirmation required → tampilkan layar cek email
+        setStep(3);
+        setResendCooldown(60);
+      } else {
+        // Email confirmation OFF → user langsung login, App.jsx akan redirect ke beranda
+        // Tidak perlu lakukan apapun di sini
+      }
+    } catch (err) {
+      setLoading(false);
+      setError('Terjadi kesalahan tidak terduga: ' + (err.message || 'Coba lagi.'));
+    }
+  };
+
+  const handleResend = async () => {
+    if (resendCooldown > 0) return;
+    setResendMsg('');
+    const { error } = await resendVerification(email);
     if (error) {
-      if (error.message.includes('already registered')) setError('Email ini sudah terdaftar. Silakan masuk.');
-      else setError(error.message);
+      setResendMsg('Gagal mengirim ulang. Coba beberapa saat lagi.');
+    } else {
+      setResendMsg('Email verifikasi berhasil dikirim ulang! Cek inbox kamu.');
+      setResendCooldown(60);
     }
   };
 
@@ -48,7 +85,10 @@ export default function RegisterScreen({ onNavigate }) {
     fontSize: 14, color: '#0F172A', outline: 'none',
     transition: 'border-color 0.2s',
   };
-  const labelStyle = { display: 'block', fontSize: 12, fontWeight: 700, color: '#64748B', marginBottom: 8, letterSpacing: '0.05em' };
+  const labelStyle = {
+    display: 'block', fontSize: 12, fontWeight: 700,
+    color: '#64748B', marginBottom: 8, letterSpacing: '0.05em',
+  };
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#FFFCF8', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', sans-serif", padding: '20px' }}>
@@ -61,22 +101,24 @@ export default function RegisterScreen({ onNavigate }) {
           <p style={{ color: '#94A3B8', fontSize: 13, margin: 0 }}>Buat akun gratis — belajar mulai hari ini</p>
         </div>
 
-        {/* Stepper */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, justifyContent: 'center' }}>
-          {[1, 2].map(s => (
-            <React.Fragment key={s}>
-              <div style={{
-                width: 28, height: 28, borderRadius: '50%',
-                background: s <= step ? '#0F172A' : '#E2E8F0',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 12, fontWeight: 800,
-                color: s <= step ? 'white' : '#94A3B8',
-                transition: 'all 0.3s',
-              }}>{s}</div>
-              {s < 2 && <div style={{ width: 40, height: 2, background: s < step ? '#0F172A' : '#E2E8F0', transition: 'background 0.3s' }} />}
-            </React.Fragment>
-          ))}
-        </div>
+        {/* Stepper — hanya tampil di step 1 & 2 */}
+        {step < 3 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, justifyContent: 'center' }}>
+            {[1, 2].map(s => (
+              <React.Fragment key={s}>
+                <div style={{
+                  width: 28, height: 28, borderRadius: '50%',
+                  background: s <= step ? '#0F172A' : '#E2E8F0',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 12, fontWeight: 800,
+                  color: s <= step ? 'white' : '#94A3B8',
+                  transition: 'all 0.3s',
+                }}>{s}</div>
+                {s < 2 && <div style={{ width: 40, height: 2, background: s < step ? '#0F172A' : '#E2E8F0', transition: 'background 0.3s' }} />}
+              </React.Fragment>
+            ))}
+          </div>
+        )}
 
         {/* Card */}
         <div style={{ background: 'white', border: '1px solid #EAF0F6', borderRadius: 24, padding: '32px 28px', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
@@ -206,12 +248,90 @@ export default function RegisterScreen({ onNavigate }) {
             </>
           )}
 
-          <div style={{ marginTop: 24, paddingTop: 24, borderTop: '1px solid #F1F5F9', textAlign: 'center' }}>
-            <span style={{ fontSize: 13, color: '#94A3B8' }}>
-              Sudah punya akun?{' '}
-              <span onClick={() => onNavigate('login')} style={{ color: '#0F172A', fontWeight: 700, cursor: 'pointer' }}>Masuk</span>
-            </span>
-          </div>
+          {/* ── STEP 3: Cek Email ── */}
+          {step === 3 && (
+            <div style={{ textAlign: 'center', padding: '8px 0' }}>
+              {/* Ikon amplop */}
+              <div style={{
+                width: 80, height: 80, borderRadius: '50%',
+                background: 'linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 38, margin: '0 auto 20px',
+                boxShadow: '0 4px 20px rgba(0,112,243,0.15)',
+              }}>
+                ✉️
+              </div>
+
+              <h1 style={{ color: '#0F172A', fontSize: 22, fontWeight: 900, margin: '0 0 8px', letterSpacing: '-0.3px' }}>
+                Cek email kamu!
+              </h1>
+              <p style={{ color: '#64748B', fontSize: 14, margin: '0 0 4px', lineHeight: 1.6 }}>
+                Kami telah mengirimkan link verifikasi ke
+              </p>
+              <p style={{ color: '#0F172A', fontSize: 15, fontWeight: 800, margin: '0 0 24px', wordBreak: 'break-all' }}>
+                {email}
+              </p>
+
+              {/* Steps */}
+              <div style={{ background: '#F8FAFC', borderRadius: 14, padding: '16px 18px', marginBottom: 24, textAlign: 'left' }}>
+                {[
+                  ['1', 'Buka email dari Latih+'],
+                  ['2', 'Klik link "Konfirmasi Email"'],
+                  ['3', 'Kamu langsung bisa masuk dan belajar!'],
+                ].map(([num, text]) => (
+                  <div key={num} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: num !== '3' ? 10 : 0 }}>
+                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#0F172A', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, flexShrink: 0 }}>{num}</div>
+                    <span style={{ fontSize: 13, color: '#475569', fontWeight: 500 }}>{text}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Resend */}
+              <p style={{ fontSize: 13, color: '#94A3B8', margin: '0 0 10px' }}>
+                Tidak menemukan email? Cek folder <strong>Spam</strong> atau kirim ulang.
+              </p>
+              <button
+                id="resend-verification"
+                onClick={handleResend}
+                disabled={resendCooldown > 0}
+                style={{
+                  padding: '11px 24px', borderRadius: 10,
+                  background: resendCooldown > 0 ? '#F1F5F9' : 'white',
+                  border: `1.5px solid ${resendCooldown > 0 ? '#E2E8F0' : '#0F172A'}`,
+                  color: resendCooldown > 0 ? '#94A3B8' : '#0F172A',
+                  fontSize: 13, fontWeight: 700,
+                  cursor: resendCooldown > 0 ? 'not-allowed' : 'pointer',
+                  marginBottom: 8, transition: 'all 0.2s',
+                }}
+              >
+                {resendCooldown > 0 ? `⏱ Kirim ulang dalam ${resendCooldown}s` : '🔄 Kirim ulang email verifikasi'}
+              </button>
+              {resendMsg && (
+                <p style={{ fontSize: 12, margin: '0 0 16px', color: resendMsg.includes('berhasil') ? '#16A34A' : '#EF4444' }}>
+                  {resendMsg}
+                </p>
+              )}
+
+              <div style={{ height: 1, background: '#F1F5F9', margin: '16px 0' }} />
+
+              <button
+                onClick={() => onNavigate('login')}
+                style={{ width: '100%', padding: '13px', background: '#0F172A', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 800, color: 'white', cursor: 'pointer' }}
+              >
+                Sudah verifikasi? Masuk →
+              </button>
+            </div>
+          )}
+
+          {/* Link ke login — hanya di step 1 & 2 */}
+          {step < 3 && (
+            <div style={{ marginTop: 24, paddingTop: 24, borderTop: '1px solid #F1F5F9', textAlign: 'center' }}>
+              <span style={{ fontSize: 13, color: '#94A3B8' }}>
+                Sudah punya akun?{' '}
+                <span onClick={() => onNavigate('login')} style={{ color: '#0F172A', fontWeight: 700, cursor: 'pointer' }}>Masuk</span>
+              </span>
+            </div>
+          )}
         </div>
 
         <p style={{ textAlign: 'center', marginTop: 20 }}>

@@ -146,10 +146,9 @@ export default function App() {
   useEffect(() => { localStorage.setItem("iso9001_completedQuizzes", JSON.stringify(completedQuizzes)); }, [completedQuizzes]);
 
   // ── Auto-redirect setelah login berhasil ──────────────────────────
-  // Ketika session muncul (login/register sukses) tapi page masih di
-  // halaman auth → redirect ke beranda
+  // Hanya redirect jika email sudah dikonfirmasi (bukan signup pending verification)
   useEffect(() => {
-    if (session && ['login', 'register', 'landing'].includes(page)) {
+    if (session && session.user?.email_confirmed_at && ['login', 'register', 'landing'].includes(page)) {
       guestLimit.resetGuest();
       setPage('beranda');
     }

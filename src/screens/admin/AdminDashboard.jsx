@@ -23,7 +23,7 @@ export default function AdminDashboard({ onNavigate }) {
   const { user } = useUser();
   const isMobile = useIsMobile();
 
-  const [tab, setTab]         = useState('dashboard');
+  const [tab, setTab]         = useState(() => localStorage.getItem('admin_tab') || 'dashboard');
   const [stats, setStats]     = useState({ users: 0, events: 0, registrations: 0, revenue: 0 });
   const [events, setEvents]   = useState([]);
   const [regs, setRegs]       = useState([]);
@@ -57,6 +57,7 @@ export default function AdminDashboard({ onNavigate }) {
   }, [user]);
 
   useEffect(() => {
+    localStorage.setItem('admin_tab', tab);
     loadAll();
   }, [tab]);
 
@@ -79,17 +80,25 @@ export default function AdminDashboard({ onNavigate }) {
       ]);
 
       // ── Registrasi terbaru + pending (tanpa join, hindari FK error) ──
-      const { data: regsRaw }    = await supabase.from('registrations').select('*').order('created_at', { ascending: false }).limit(50);
+      const { data: regsRaw }    = await supabase.from('registrations').select('*').order('created_at', { ascending: false }).limit(200);
       const { data: pendingRaw } = await supabase.from('registrations').select('*').eq('status', 'pending').order('created_at', { ascending: true });
-      const { data: profilesRaw } = await supabase.from('profiles').select('id, name, job_role');
+      const { data: profilesRaw } = await supabase.from('profiles').select('id, name, job_role, email');
+
+      // Fetch payments untuk join ke registrasi (channel + amount)
+      const { data: paymentsRaw } = await supabase.from('payments').select('registration_id, payment_method, amount, status').order('created_at', { ascending: false });
+      // Map: registration_id → payment (ambil yang pertama/terbaru)
+      const paymentMap = {};
+      for (const p of (paymentsRaw || [])) {
+        if (!paymentMap[p.registration_id]) paymentMap[p.registration_id] = p;
+      }
 
       // Map profiles dan events by id untuk lookup cepat
       const profileMap = Object.fromEntries((profilesRaw || []).map(p => [p.id, p]));
       const eventMap   = Object.fromEntries((eventsData  || []).map(e => [e.id, e]));
 
       // Gabungkan manual
-      const regsData    = (regsRaw    || []).map(r => ({ ...r, profiles: profileMap[r.user_id], events: eventMap[r.event_id] }));
-      const pendingMerged = (pendingRaw || []).map(r => ({ ...r, profiles: profileMap[r.user_id], events: eventMap[r.event_id] }));
+      const regsData    = (regsRaw    || []).map(r => ({ ...r, profiles: profileMap[r.user_id], events: eventMap[r.event_id], payment: paymentMap[r.id] || null }));
+      const pendingMerged = (pendingRaw || []).map(r => ({ ...r, profiles: profileMap[r.user_id], events: eventMap[r.event_id], payment: paymentMap[r.id] || null }));
 
       console.log('[Admin] pendingIG:', pendingMerged.length, 'rows', pendingMerged);
 
@@ -157,6 +166,41 @@ export default function AdminDashboard({ onNavigate }) {
     // Update status registrasi ke completed
     await supabase.from('registrations').update({ status: 'completed' }).eq('id', reg.id);
     loadAll();
+  };
+
+  // ── Download Excel (CSV UTF-8 BOM, kompatibel Excel) ──────────
+  const downloadRegsExcel = (rows) => {
+    const STATUS_LABEL = { pending: 'Menunggu', verified: 'Terverifikasi', paid: 'Terbayar', attended: 'Hadir', quiz_unlocked: 'Kuis Terbuka', completed: 'Selesai', rejected: 'Ditolak' };
+    const headers = ['No','Tanggal Daftar','Waktu','Nama','Email','Event','Jenis Event','Paket','Channel Pembayaran','Nominal (Rp)','Status'];
+    const csvRows = [headers.join(';')];
+    rows.forEach((reg, i) => {
+      const isFree = !reg.events?.price_regular || reg.events.price_regular === 0;
+      const nominal = reg.payment?.amount ?? (isFree ? 0 : '');
+      const channel = reg.payment?.payment_method || (isFree ? 'Gratis' : '');
+      const tgl = new Date(reg.created_at);
+      const row = [
+        i + 1,
+        tgl.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+        tgl.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+        reg.profiles?.name || '',
+        reg.profiles?.email || '',
+        `"${(reg.events?.title || '').replace(/"/g,'""')}"`,
+        reg.events?.type?.replace(/_/g,' ') || '',
+        reg.package || '',
+        channel,
+        nominal,
+        STATUS_LABEL[reg.status] || reg.status || '',
+      ];
+      csvRows.push(row.join(';'));
+    });
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `registrasi-latih-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const TABS = [
@@ -336,112 +380,113 @@ export default function AdminDashboard({ onNavigate }) {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
                 <h2 style={{ fontWeight: 900, color: 'var(--c-dark)', margin: 0, fontSize: 20 }}>Manajemen Registrasi</h2>
-                <span style={{ fontSize: 12, color: 'var(--c-muted)' }}>{filteredRegs.length} dari {regs.length} registrasi</span>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <span style={{ fontSize: 12, color: 'var(--c-muted)' }}>{filteredRegs.length} dari {regs.length} data</span>
+                  <button
+                    onClick={() => downloadRegsExcel(filteredRegs)}
+                    style={{ display: 'flex', alignItems: 'center', gap: 6, backgroundColor: '#16A34A', color: 'white', border: 'none', borderRadius: 10, padding: '9px 16px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                  >
+                    ⬇ Download Excel
+                  </button>
+                </div>
               </div>
 
               {/* Filter bar */}
               <div style={{ backgroundColor: 'white', borderRadius: 12, border: '1px solid #EAF0F6', padding: '12px 16px', marginBottom: 16, display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
-                {/* Filter jenis */}
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
                   <span style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', marginRight: 2 }}>JENIS:</span>
                   {[['all','Semua'],['training','🏭 Training'],['webinar_reguler','🎁 W. Reguler'],['webinar_advanced','⭐ W. Advanced']].map(([v, l]) => (
-                    <button key={v} onClick={() => setFilterRegType(v)} style={{
-                      padding: '4px 10px', borderRadius: 99, fontSize: 11, fontWeight: 700, cursor: 'pointer', border: 'none',
-                      backgroundColor: filterRegType === v ? '#0070F3' : '#F1F5F9',
-                      color: filterRegType === v ? 'white' : '#64748B',
-                    }}>{l}</button>
+                    <button key={v} onClick={() => setFilterRegType(v)} style={{ padding: '4px 10px', borderRadius: 99, fontSize: 11, fontWeight: 700, cursor: 'pointer', border: 'none', backgroundColor: filterRegType === v ? '#0070F3' : '#F1F5F9', color: filterRegType === v ? 'white' : '#64748B' }}>{l}</button>
                   ))}
                 </div>
                 <div style={{ width: 1, height: 20, backgroundColor: '#E2E8F0' }} />
-                {/* Filter status */}
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
                   <span style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', marginRight: 2 }}>STATUS:</span>
                   {[['all','Semua'],['pending','Menunggu'],['paid','Terbayar'],['attended','Hadir'],['quiz_unlocked','Kuis'],['completed','Selesai']].map(([v, l]) => (
-                    <button key={v} onClick={() => setFilterRegStatus(v)} style={{
-                      padding: '4px 10px', borderRadius: 99, fontSize: 11, fontWeight: 700, cursor: 'pointer', border: 'none',
-                      backgroundColor: filterRegStatus === v ? '#0F172A' : '#F1F5F9',
-                      color: filterRegStatus === v ? 'white' : '#64748B',
-                    }}>{l}</button>
+                    <button key={v} onClick={() => setFilterRegStatus(v)} style={{ padding: '4px 10px', borderRadius: 99, fontSize: 11, fontWeight: 700, cursor: 'pointer', border: 'none', backgroundColor: filterRegStatus === v ? '#0F172A' : '#F1F5F9', color: filterRegStatus === v ? 'white' : '#64748B' }}>{l}</button>
                   ))}
                 </div>
                 {(filterRegType !== 'all' || filterRegStatus !== 'all') && (
-                  <button onClick={() => { setFilterRegType('all'); setFilterRegStatus('all'); }} style={{ fontSize: 11, color: '#EF4444', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700 }}>
-                    × Reset
-                  </button>
+                  <button onClick={() => { setFilterRegType('all'); setFilterRegStatus('all'); }} style={{ fontSize: 11, color: '#EF4444', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700 }}>× Reset</button>
                 )}
               </div>
 
+              {/* ── Tabel Registrasi ── */}
               <div style={{ backgroundColor: 'white', borderRadius: 16, border: '1px solid #EAF0F6', overflow: 'hidden' }}>
-                {filteredRegs.length === 0 && (
+                {filteredRegs.length === 0 ? (
                   <div style={{ textAlign: 'center', padding: '48px 20px', color: 'var(--c-muted)', fontSize: 13 }}>
                     <div style={{ fontSize: 32, marginBottom: 8 }}>💭</div>
                     Tidak ada data yang sesuai filter
                   </div>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                      <thead>
+                        <tr style={{ backgroundColor: '#F8FAFC', borderBottom: '2px solid #EAF0F6' }}>
+                          {['No','Tanggal Daftar','Nama','Email','Event','Paket','Channel','Nominal','Status','Aksi'].map(h => (
+                            <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 800, color: '#64748B', whiteSpace: 'nowrap', fontSize: 11, letterSpacing: '0.04em' }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredRegs.map((reg, idx) => {
+                          const s = getS(reg);
+                          const isFree = !reg.events?.price_regular || reg.events.price_regular === 0;
+                          const nominal = reg.payment?.amount ?? (isFree ? 0 : null);
+                          const channel = reg.payment?.payment_method || (isFree ? 'Gratis' : '—');
+                          const email = reg.profiles?.email || '—';
+                          return (
+                            <tr key={reg.id} style={{ borderBottom: '1px solid #F1F5F9', transition: 'background 0.1s' }}
+                              onMouseEnter={e => e.currentTarget.style.backgroundColor = '#FAFBFF'}
+                              onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                            >
+                              <td style={{ padding: '12px 14px', color: '#94A3B8', fontWeight: 700 }}>{idx + 1}</td>
+                              <td style={{ padding: '12px 14px', whiteSpace: 'nowrap', color: '#475569' }}>
+                                {new Date(reg.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}<br />
+                                <span style={{ color: '#94A3B8', fontSize: 10 }}>{new Date(reg.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
+                              </td>
+                              <td style={{ padding: '12px 14px', fontWeight: 700, color: '#0F172A', whiteSpace: 'nowrap' }}>{reg.profiles?.name || '—'}</td>
+                              <td style={{ padding: '12px 14px', color: '#475569', maxWidth: 180 }}>
+                                <span style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{email}</span>
+                              </td>
+                              <td style={{ padding: '12px 14px', maxWidth: 200 }}>
+                                <div style={{ fontWeight: 600, color: '#0F172A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{reg.events?.title || '—'}</div>
+                                <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 2 }}>{reg.events?.type?.replace(/_/g,' ') || ''}</div>
+                              </td>
+                              <td style={{ padding: '12px 14px' }}>
+                                <span style={{ padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700, backgroundColor: reg.package === 'premium' ? '#EFF6FF' : '#F1F5F9', color: reg.package === 'premium' ? '#1D4ED8' : '#64748B' }}>{reg.package || '—'}</span>
+                              </td>
+                              <td style={{ padding: '12px 14px', whiteSpace: 'nowrap', fontWeight: 600, color: '#475569' }}>{channel}</td>
+                              <td style={{ padding: '12px 14px', whiteSpace: 'nowrap', fontWeight: 800, color: nominal === 0 ? '#16A34A' : '#0F172A' }}>
+                                {nominal === null ? '—' : nominal === 0 ? 'Gratis' : `Rp ${nominal.toLocaleString('id-ID')}`}
+                              </td>
+                              <td style={{ padding: '12px 14px' }}>
+                                <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 99, backgroundColor: s.bg, color: s.color, whiteSpace: 'nowrap' }}>{s.label}</span>
+                              </td>
+                              <td style={{ padding: '12px 14px' }}>
+                                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                                  {reg.status === 'paid' && (
+                                    <button onClick={() => markAttended(reg.id)} style={{ fontSize: 10, fontWeight: 700, color: '#0070F3', background: '#EFF6FF', border: 'none', borderRadius: 6, padding: '5px 10px', cursor: 'pointer', whiteSpace: 'nowrap' }}>✓ Hadir</button>
+                                  )}
+                                  {reg.status === 'attended' && (() => {
+                                    const isAdv = reg.events?.type === 'webinar_advanced';
+                                    const isPrem = reg.package === 'premium';
+                                    const hasQ = reg.events?.quiz_questions?.length > 0;
+                                    if (isAdv && !isPrem) return <button onClick={() => completeWithoutCert(reg.id)} style={{ fontSize: 10, fontWeight: 700, color: '#15803D', background: '#F0FDF4', border: '1px solid #86EFAC', borderRadius: 6, padding: '5px 10px', cursor: 'pointer', whiteSpace: 'nowrap' }}>✓ Selesai</button>;
+                                    if (hasQ) return <button onClick={() => unlockQuiz(reg.id)} style={{ fontSize: 10, fontWeight: 700, color: 'white', background: '#E05C7A', border: 'none', borderRadius: 6, padding: '5px 10px', cursor: 'pointer', whiteSpace: 'nowrap' }}>🎯 Buka Kuis</button>;
+                                    return <span style={{ fontSize: 10, color: '#94A3B8', fontStyle: 'italic' }}>Tidak ada kuis</span>;
+                                  })()}
+                                  {reg.status === 'quiz_unlocked' && <span style={{ fontSize: 10, fontWeight: 700, color: '#E05C7A', whiteSpace: 'nowrap' }}>🎯 Menunggu</span>}
+                                  {reg.status === 'completed' && <span style={{ fontSize: 10, fontWeight: 700, color: '#15803D', whiteSpace: 'nowrap' }}>{reg.events?.type === 'webinar_advanced' && reg.package !== 'premium' ? '✓ Selesai' : '🏅 Sertifikat'}</span>}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
-                {filteredRegs.map((reg, idx) => {
-                  const s = getS(reg);
-                  return (
-                    <div key={reg.id} style={{ padding: '16px 20px', borderBottom: idx < filteredRegs.length - 1 ? '1px solid #F8FAFC' : 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-                      <div style={{ flex: 1, minWidth: 200 }}>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--c-dark)', marginBottom: 2 }}>{reg.profiles?.name || '—'}</div>
-                        <div style={{ fontSize: 11, color: 'var(--c-muted)', marginBottom: 4 }}>
-                          {reg.events?.title} · paket <strong>{reg.package}</strong>
-                        </div>
-                        <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 99, backgroundColor: s.bg, color: s.color }}>{s.label}</span>
-                      </div>
-                      <div style={{ display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap' }}>
-                        {/* Tandai Hadir — berlaku untuk semua jenis event yang sudah paid */}
-                        {reg.status === 'paid' && (
-                          <button onClick={() => markAttended(reg.id)} style={{ fontSize: 11, fontWeight: 700, color: '#0070F3', background: '#EFF6FF', border: 'none', borderRadius: 8, padding: '7px 12px', cursor: 'pointer' }}>
-                            ✓ Tandai Hadir
-                          </button>
-                        )}
-
-                        {/* ── Status ATTENDED — logika berbeda per jenis & paket ── */}
-                        {reg.status === 'attended' && (() => {
-                          const isAdvanced = reg.events?.type === 'webinar_advanced';
-                          const isPremium  = reg.package === 'premium';
-                          const hasQuiz    = reg.events?.quiz_questions?.length > 0;
-
-                          if (isAdvanced && !isPremium) {
-                            // Free package — tidak ada kuis & tidak ada sertifikat
-                            return (
-                              <button
-                                onClick={() => completeWithoutCert(reg.id)}
-                                style={{ fontSize: 11, fontWeight: 700, color: '#15803D', background: '#F0FDF4', border: '1px solid #86EFAC', borderRadius: 8, padding: '7px 12px', cursor: 'pointer' }}
-                              >
-                                ✓ Selesai (Tanpa Sertifikat)
-                              </button>
-                            );
-                          } else if (hasQuiz) {
-                            // Premium / training / webinar_reguler dengan kuis
-                            return (
-                              <button
-                                onClick={() => unlockQuiz(reg.id)}
-                                style={{ fontSize: 11, fontWeight: 700, color: 'white', background: '#E05C7A', border: 'none', borderRadius: 8, padding: '7px 12px', cursor: 'pointer' }}
-                              >
-                                🎯 Buka Kuis
-                              </button>
-                            );
-                          } else {
-                            return <span style={{ fontSize: 11, color: '#94A3B8', fontStyle: 'italic' }}>Tidak ada kuis</span>;
-                          }
-                        })()}
-
-                        {reg.status === 'quiz_unlocked' && (
-                          <span style={{ fontSize: 11, fontWeight: 700, color: '#E05C7A' }}>🎯 Menunggu Peserta</span>
-                        )}
-                        {reg.status === 'completed' && (() => {
-                          // Advanced free — selesai tanpa sertifikat
-                          if (reg.events?.type === 'webinar_advanced' && reg.package !== 'premium')
-                            return <span style={{ fontSize: 11, fontWeight: 700, color: '#15803D' }}>✓ Selesai</span>;
-                          // Semua yang lain — sertifikat terbit
-                          return <span style={{ fontSize: 11, fontWeight: 700, color: '#15803D' }}>🏅 Sertifikat Terbit</span>;
-                        })()}
-                      </div>
-                    </div>
-                  );
-                })}
               </div>
             </div>
           )}
