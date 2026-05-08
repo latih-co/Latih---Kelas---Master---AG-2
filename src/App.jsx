@@ -31,6 +31,7 @@ import NotFoundScreen   from "./screens/NotFoundScreen";
 import AdminDashboard   from "./screens/admin/AdminDashboard";
 import AdminEventForm   from "./screens/admin/AdminEventForm";
 import CertVerifyScreen from "./screens/CertVerifyScreen";
+import WelcomeScreen    from "./screens/WelcomeScreen";
 
 export default function App() {
   const [page, setPage] = useState(() => {
@@ -38,7 +39,8 @@ export default function App() {
     const urlParams = new URLSearchParams(window.location.search);
     const verifyCode = urlParams.get('verify');
     if (verifyCode) return 'cert_verify';
-    return localStorage.getItem("industrilearn_page") || "landing";
+    // Guest selalu mulai di landing — user login dihandle oleh useEffect([session])
+    return 'landing';
   });
 
   const [verifyCode] = useState(() => {
@@ -137,7 +139,9 @@ export default function App() {
 
   const isMobile = useIsMobile();
 
-  useEffect(() => { localStorage.setItem("industrilearn_page", page); }, [page]);
+  // 'industrilearn_page' tidak perlu disimpan ke localStorage lagi
+  // karena inisialisasi halaman sudah diatur langsung oleh logika session
+
   useEffect(() => { if (activeTopic) localStorage.setItem("iso9001_topicId", activeTopic.id); else localStorage.removeItem("iso9001_topicId"); }, [activeTopic]);
   useEffect(() => { if (activeSubLesson) localStorage.setItem("iso9001_subLessonId", activeSubLesson.id); else localStorage.removeItem("iso9001_subLessonId"); }, [activeSubLesson]);
   useEffect(() => { if (activeTraining) localStorage.setItem("iso9001_training", JSON.stringify(activeTraining)); else localStorage.removeItem("iso9001_training"); }, [activeTraining]);
@@ -150,7 +154,28 @@ export default function App() {
   useEffect(() => {
     if (session && session.user?.email_confirmed_at && ['login', 'register', 'landing'].includes(page)) {
       guestLimit.resetGuest();
-      setPage('beranda');
+      const isNewUser = !localStorage.getItem('latih_welcomed_' + session.user.id);
+      if (isNewUser) {
+        // ── Reset semua histori pembelajaran (fresh start untuk user baru) ──
+        const LEARNING_KEYS = [
+          'iso9001_topicId', 'iso9001_subLessonId',
+          'iso9001_training', 'iso9001_record', 'iso9001_webinar',
+          'iso9001_completedQuizzes',
+          'ls_topicId', 'ls_subLessonId',
+          'latih_streak', 'latih_last_active',
+          'iso9001_guestTopicIds', 'iso9001_guestLessonId',
+        ];
+        LEARNING_KEYS.forEach(k => localStorage.removeItem(k));
+        // Reset React state
+        setActiveTopic(null);
+        setActiveSubLesson(null);
+        setActiveTraining(null);
+        setActiveRecord(null);
+        setActiveWebinar(null);
+        setCompletedQuizzes({});
+        setLastStudied({ topic: null, subLesson: null });
+      }
+      setPage(isNewUser ? 'welcome' : 'beranda');
     }
   }, [session]);
 
@@ -345,6 +370,19 @@ export default function App() {
         return <AdminEventForm onNavigate={goPage} />;
       case "admin_edit_event":
         return <AdminEventForm onNavigate={goPage} existingEvent={activeAdminEvent} />;
+      case "welcome":
+        return (
+          <WelcomeScreen
+            userName={user?.name}
+            onChoose={(dest) => {
+              // Tandai user sudah melihat welcome screen
+              if (session?.user?.id) {
+                localStorage.setItem('latih_welcomed_' + session.user.id, '1');
+              }
+              goPage(dest === 'beranda' ? 'beranda' : dest);
+            }}
+          />
+        );
       default:
         return <NotFoundScreen onGoHome={() => goPage("beranda")} />;
     }
@@ -393,7 +431,7 @@ export default function App() {
   }
 
   // Khusus untuk landing, legal, auth, & admin pages → render full tanpa SidebarLayout
-  const FULL_SCREEN_PAGES = ['landing', 'terms', 'privacy', 'about', 'contact', 'login', 'register', 'admin', 'admin_new_event', 'admin_edit_event', 'cert_preview', 'cert_calibrator', 'cert_verify'];
+  const FULL_SCREEN_PAGES = ['landing', 'terms', 'privacy', 'about', 'contact', 'login', 'register', 'admin', 'admin_new_event', 'admin_edit_event', 'cert_preview', 'cert_calibrator', 'cert_verify', 'welcome'];
   if (FULL_SCREEN_PAGES.includes(page)) {
     return (
       <>
