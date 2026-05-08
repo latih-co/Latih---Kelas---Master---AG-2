@@ -275,7 +275,7 @@ export default function RegisterScreen({ onNavigate }) {
               {/* Steps */}
               <div style={{ background: '#F8FAFC', borderRadius: 14, padding: '16px 18px', marginBottom: 24, textAlign: 'left' }}>
                 {[
-                  ['1', 'Buka email dari Latih+'],
+                  ['1', 'Buka email dari Latih'],
                   ['2', 'Klik link "Konfirmasi Email"'],
                   ['3', 'Kamu langsung bisa masuk dan belajar!'],
                 ].map(([num, text]) => (

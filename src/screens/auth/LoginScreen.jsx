@@ -130,7 +130,7 @@ export default function LoginScreen({ onNavigate }) {
                   <span style={{ fontSize: 18 }}>📧</span>
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 800, color: '#92400E', marginBottom: 2 }}>Email belum diverifikasi</div>
-                    <div style={{ fontSize: 12, color: '#B45309', lineHeight: 1.5 }}>Cek inbox atau folder Spam untuk email verifikasi dari Latih+.</div>
+                    <div style={{ fontSize: 12, color: '#B45309', lineHeight: 1.5 }}>Cek inbox atau folder Spam untuk email verifikasi dari Latih.</div>
                   </div>
                 </div>
                 <button

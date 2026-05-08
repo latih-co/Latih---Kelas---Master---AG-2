@@ -57,7 +57,7 @@ export default function BerandaScreen({
           <div style={{ fontSize: 13, color: 'var(--c-muted)', fontWeight: 500 }}>
             {hasHistory
               ? 'Yuk lanjutkan perjalanan belajarmu hari ini'
-              : 'Selamat datang di Latih+ — mulai perjalanan belajarmu!'}
+              : 'Selamat datang di Latih — mulai perjalanan belajarmu!'}
           </div>
         </div>
 
