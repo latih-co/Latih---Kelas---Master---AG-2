@@ -204,3 +204,34 @@ export async function getRegistrationStatus(eventId) {
 
   return data;
 }
+
+/**
+ * [ADMIN ONLY] Daftar event gratis dengan akses Premium penuh
+ * Digunakan admin untuk test flow sertifikat, kuis, dan konten tanpa bayar.
+ * Status langsung 'paid' + package 'premium'.
+ */
+export async function adminRegisterFree(eventId) {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return { error: 'Belum login' };
+
+  // Cek apakah sudah terdaftar
+  const { data: existing } = await supabase
+    .from('registrations')
+    .select('id')
+    .eq('user_id', session.user.id)
+    .eq('event_id', eventId)
+    .maybeSingle();
+
+  if (existing) return { error: 'Sudah terdaftar di event ini' };
+
+  const { error } = await supabase.from('registrations').insert({
+    user_id:  session.user.id,
+    event_id: eventId,
+    package:  'premium',
+    status:   'paid',
+  });
+
+  if (error) return { error: error.message };
+  return { success: true };
+}
+

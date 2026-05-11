@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PAYMENT_METHODS, createPayment, registerFreeEvent, registerFreeDirectly, getRegistrationStatus } from '../services/payment';
+import { PAYMENT_METHODS, createPayment, registerFreeEvent, registerFreeDirectly, getRegistrationStatus, adminRegisterFree } from '../services/payment';
 import { useUser } from '../context/UserContext';
 
 const STATUS_INFO = {
@@ -19,7 +19,8 @@ const STATUS_INFO = {
  *   onNavigate    - callback navigasi
  */
 export default function PaymentModal({ event, onClose, onNavigate, initialPackage = 'free' }) {
-  const { session } = useUser();
+  const { session, user } = useUser();
+  const isAdmin = user?.role === 'admin';
 
   const [step, setStep]         = useState('status_check');
   const [regStatus, setRegStatus] = useState(null);
@@ -74,6 +75,15 @@ export default function PaymentModal({ event, onClose, onNavigate, initialPackag
     setStep('redirect');
   };
 
+  // 🛡️ ADMIN ONLY — bypass payment, langsung daftar premium
+  const handleAdminRegister = async () => {
+    setLoading(true); setError('');
+    const result = await adminRegisterFree(event.id);
+    setLoading(false);
+    if (result.error) { setError(result.error); return; }
+    setStep('admin_done');
+  };
+
 
   const handleFreeRegister = async () => {
     if (!igUsername.trim() || !igUsername.startsWith('@')) { setError('Masukkan username Instagram dengan @'); return; }
@@ -107,6 +117,23 @@ export default function PaymentModal({ event, onClose, onNavigate, initialPackag
       </ModalWrapper>
     );
   }
+
+  // 🛡️ Admin bypass banner — tampil di semua step non-registered
+  const AdminBanner = () => (
+    <div style={{ backgroundColor: '#0F172A', borderRadius: 12, padding: '14px 16px', marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+      <div>
+        <div style={{ fontSize: 11, fontWeight: 800, color: '#F59E0B', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>🛡️ Admin Mode</div>
+        <div style={{ fontSize: 12, color: '#94A3B8' }}>Daftar gratis dengan akses Premium penuh</div>
+      </div>
+      <button
+        onClick={handleAdminRegister}
+        disabled={loading}
+        style={{ padding: '9px 16px', borderRadius: 10, border: 'none', backgroundColor: '#F59E0B', color: '#0F172A', fontSize: 12, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}
+      >
+        {loading ? '⏳...' : '⚡ Akses Gratis'}
+      </button>
+    </div>
+  );
 
   return (
     <ModalWrapper onClose={onClose} title={event.title}>
@@ -178,6 +205,7 @@ export default function PaymentModal({ event, onClose, onNavigate, initialPackag
       {/* ── Konfirmasi Daftar Gratis (Training harga 0) ── */}
       {!loading && step === 'free_direct' && (
         <div style={{ textAlign: 'center', padding: '8px 0' }}>
+          {isAdmin && <AdminBanner />}
           <div style={{ fontSize: 48, marginBottom: 12 }}>🎉</div>
           <div style={{ fontWeight: 900, color: 'var(--c-dark)', fontSize: 18, marginBottom: 8 }}>Event Ini Gratis!</div>
           <div style={{ fontSize: 13, color: 'var(--c-muted)', lineHeight: 1.6, marginBottom: 24 }}>
@@ -206,8 +234,9 @@ export default function PaymentModal({ event, onClose, onNavigate, initialPackag
 
       {!loading && step === 'free_register' && (
         <div>
+          {isAdmin && <AdminBanner />}
           <div style={{ background: '#F0FDF4', border: '1px solid #86EFAC', borderRadius: 12, padding: 16, marginBottom: 20, fontSize: 13, color: '#166534' }}>
-            🎉 <strong>Gratis!</strong> Cukup follow & share untuk daftar.
+            🎉 <strong>Gratis!</strong> Cukup follow &amp; share untuk daftar.
           </div>
           <div style={{ marginBottom: 16 }}>
             <label style={labelStyle}>Username Instagram kamu</label>
@@ -268,6 +297,7 @@ export default function PaymentModal({ event, onClose, onNavigate, initialPackag
       {/* ── Pilih paket (training / webinar adv) ── */}
       {!loading && step === 'choose_package' && (
         <div>
+          {isAdmin && <AdminBanner />}
           {hasPremium && (
             <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
               {[
@@ -296,6 +326,7 @@ export default function PaymentModal({ event, onClose, onNavigate, initialPackag
       {/* ── Pilih metode bayar ── */}
       {!loading && step === 'choose_method' && (
         <div>
+          {isAdmin && <AdminBanner />}
           <div style={{ fontWeight: 700, color: 'var(--c-dark)', marginBottom: 12, fontSize: 14 }}>Pilih Metode Pembayaran</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
             {PAYMENT_METHODS.map(m => (
@@ -319,6 +350,21 @@ export default function PaymentModal({ event, onClose, onNavigate, initialPackag
               {loading ? '⏳ Memproses...' : '💳 Bayar Sekarang'}
             </button>
           </div>
+        </div>
+      )}
+
+      {/* ── Admin done ── */}
+      {!loading && step === 'admin_done' && (
+        <div style={{ textAlign: 'center', padding: '24px 0' }}>
+          <div style={{ fontSize: 48, marginBottom: 12 }}>🛡️</div>
+          <div style={{ fontWeight: 900, color: 'var(--c-dark)', fontSize: 18, marginBottom: 8 }}>Berhasil Terdaftar!</div>
+          <div style={{ fontSize: 13, color: 'var(--c-muted)', lineHeight: 1.6, marginBottom: 16 }}>
+            Akses <strong>Premium</strong> aktif. Cek Profil → Aktivitas untuk lihat link Zoom dan kuis.
+          </div>
+          <div style={{ background: '#FEF3C7', border: '1px solid #FCD34D', borderRadius: 10, padding: '10px 14px', fontSize: 12, color: '#92400E', marginBottom: 20 }}>
+            🛡️ Admin Mode — tidak ada transaksi nyata
+          </div>
+          <button onClick={() => { onClose(); onNavigate?.('profil'); }} style={btnStyle('#0F172A')}>Lihat Aktivitas di Profil →</button>
         </div>
       )}
 

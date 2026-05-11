@@ -49,6 +49,14 @@ serve(async (req) => {
     total_amount,
   } = payload;
 
+  // ── Handle test callback dari Tripay Tester (merchant_ref null) ─
+  if (!merchant_ref) {
+    console.log("Test callback received (merchant_ref null) — skipping");
+    return new Response(JSON.stringify({ success: true }), {
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL"),
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")
@@ -62,8 +70,12 @@ serve(async (req) => {
     .single();
 
   if (payError || !payment) {
+    // Tetap return 200 agar Tripay tidak melakukan retry
+    // (payment mungkin sudah dihapus atau ref tidak valid)
     console.error("Payment not found:", merchant_ref);
-    return new Response(JSON.stringify({ success: false, message: "Payment not found" }), { status: 404 });
+    return new Response(JSON.stringify({ success: true, message: "Payment not found, skipped" }), {
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   // ── Update status payment ───────────────────────────────────
