@@ -29,7 +29,7 @@ export default function ProfilScreen({ onNavigate }) {
 
       const { data: regs } = await supabase
         .from('registrations')
-        .select('*, events(title, type, event_date, image_url, zoom_link, quiz_questions, quiz_passing_score, silabus, price_premium)')
+        .select('*, events(title, type, event_date, image_url, zoom_link, extra_link, extra_link_label, quiz_questions, quiz_passing_score, silabus, price_premium)')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -226,6 +226,8 @@ export default function ProfilScreen({ onNavigate }) {
                 : rawS;
               const showZoom = reg.events?.zoom_link &&
                 ['verified','paid','attended','quiz_unlocked'].includes(reg.status);
+              const showExtra = reg.events?.extra_link &&
+                ['verified','paid','attended','quiz_unlocked'].includes(reg.status);
               const isWebAdv = reg.events?.type === 'webinar_advanced';
               const pkg = reg.package; // 'free' | 'premium' | undefined
               const packageBadge = isWebAdv && pkg
@@ -299,6 +301,22 @@ export default function ProfilScreen({ onNavigate }) {
                         }}
                       >
                         🔗 Join Zoom
+                      </a>
+                    )}
+                    {showExtra && (
+                      <a
+                        href={reg.events.extra_link}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 4,
+                          fontSize: 10, fontWeight: 800, padding: '3px 10px',
+                          borderRadius: 6, textDecoration: 'none',
+                          backgroundColor: '#F0FDF4', color: '#15803D',
+                          border: '1px solid #86EFAC',
+                        }}
+                      >
+                        {reg.events.extra_link_label || '📎 Fasilitas'}
                       </a>
                     )}
                     {reg.events?.type === 'webinar_advanced'

@@ -36,6 +36,9 @@ export default function AdminDashboard({ onNavigate }) {
   const [filterRegStatus, setFilterRegStatus] = useState('all');
   const [filterEvType,    setFilterEvType]    = useState('all');
   const [filterEvActive,  setFilterEvActive]  = useState('all');
+  const [userStats,       setUserStats]       = useState([]);
+  const [selectedUser,    setSelectedUser]    = useState(null);
+  const [userSearch,      setUserSearch]      = useState('');
 
   // Derived filtered arrays
   const filteredRegs = regs.filter(r => {
@@ -107,6 +110,16 @@ export default function AdminDashboard({ onNavigate }) {
       setEvents(eventsData || []);
       setRegs(regsData);
       setPendingIG(pendingMerged);
+
+      // ── Agregasi data per user ──
+      const userStatsData = (profilesRaw || []).map(profile => {
+        const userRegs = regsData.filter(r => r.user_id === profile.id);
+        const totalSpend = userRegs.reduce((sum, r) => sum + (r.payment?.amount || 0), 0);
+        const channels = [...new Set(userRegs.map(r => r.payment?.payment_method).filter(Boolean))];
+        const completedCount = userRegs.filter(r => r.status === 'completed').length;
+        return { ...profile, regs: userRegs, totalSpend, channels, completedCount };
+      }).sort((a, b) => b.totalSpend - a.totalSpend || b.regs.length - a.regs.length);
+      setUserStats(userStatsData);
     } catch (err) {
       console.error('[Admin] loadAll error:', err);
     } finally {
@@ -150,6 +163,11 @@ export default function AdminDashboard({ onNavigate }) {
 
   const markAttended = async (regId) => {
     await supabase.from('registrations').update({ status: 'attended' }).eq('id', regId);
+    loadAll();
+  };
+
+  const toggleEventActive = async (ev) => {
+    await supabase.from('events').update({ is_active: !ev.is_active }).eq('id', ev.id);
     loadAll();
   };
 
@@ -203,10 +221,43 @@ export default function AdminDashboard({ onNavigate }) {
     URL.revokeObjectURL(url);
   };
 
+  // ── Download User Data Excel ──
+  const downloadUsersExcel = () => {
+    const STATUS_LABEL = { pending: 'Menunggu', verified: 'Terverifikasi', paid: 'Terbayar', attended: 'Hadir', quiz_unlocked: 'Kuis Terbuka', completed: 'Selesai', rejected: 'Ditolak' };
+    const headers = ['No','Nama','Email','Jabatan','Total Event','Selesai','Channel Pembayaran','Total Pengeluaran (Rp)','Detail Event'];
+    const csvRows = [headers.join(';')];
+    userStats.forEach((u, i) => {
+      const detailEvents = u.regs.map(r =>
+        `${r.events?.title || '?'} (${STATUS_LABEL[r.status] || r.status})`
+      ).join(' | ');
+      const row = [
+        i + 1,
+        u.name || '',
+        u.email || '',
+        u.job_role || '',
+        u.regs.length,
+        u.completedCount,
+        u.channels.join(', ') || 'Gratis',
+        u.totalSpend,
+        `"${detailEvents.replace(/"/g, '""')}"`,
+      ];
+      csvRows.push(row.join(';'));
+    });
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `data-user-latih-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const TABS = [
     { id: 'dashboard',     label: '📊 Dashboard' },
     { id: 'events',        label: '📅 Events' },
     { id: 'registrations', label: '📋 Registrasi' },
+    { id: 'users',         label: '👥 Data User' },
     { id: 'verify_ig',     label: `⚡ Verifikasi IG${pendingIG.length > 0 ? ` (${pendingIG.length})` : ''}` },
   ];
 
@@ -339,41 +390,200 @@ export default function AdminDashboard({ onNavigate }) {
                 )}
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2,1fr)', gap: 16 }}>
-                {filteredEvents.length === 0 && (
-                  <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '48px 20px', color: 'var(--c-muted)', fontSize: 13 }}>
+              {/* ── Tabel Events ── */}
+              <div style={{ backgroundColor: 'white', borderRadius: 16, border: '1px solid #EAF0F6', overflow: 'hidden' }}>
+                {filteredEvents.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '48px 20px', color: 'var(--c-muted)', fontSize: 13 }}>
                     <div style={{ fontSize: 32, marginBottom: 8 }}>💭</div>
                     {events.length === 0 ? 'Belum ada event. Klik "＋ Buat Event" untuk mulai.' : 'Tidak ada event yang sesuai filter.'}
                   </div>
-                )}
-                {filteredEvents.map(ev => (
-                  <div key={ev.id} style={{ backgroundColor: 'white', border: '1px solid #EAF0F6', borderRadius: 16, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 12 }}>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ display: 'inline-block', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.8, color: '#0070F3', background: '#EFF6FF', padding: '2px 8px', borderRadius: 6, marginBottom: 6 }}>
-                          {ev.type?.replace(/_/g, ' ')}
-                        </div>
-                        <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--c-dark)', lineHeight: 1.3, marginBottom: 4 }}>{ev.title}</div>
-                        <div style={{ fontSize: 11, color: 'var(--c-muted)' }}>
-                          📅 {ev.event_date ? new Date(ev.event_date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : 'Tanggal belum diset'}
-                        </div>
-                      </div>
-                      <div style={{ flexShrink: 0, width: 10, height: 10, borderRadius: '50%', backgroundColor: ev.is_active ? '#22C55E' : '#94A3B8', marginTop: 4 }} title={ev.is_active ? 'Aktif' : 'Nonaktif'} />
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #F1F5F9', paddingTop: 12, gap: 8, flexWrap: 'wrap' }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--c-dark)' }}>
-                        {ev.price_regular === 0 ? 'Gratis' : `Rp ${(ev.price_regular/1000).toFixed(0)}k`}
-                        {ev.price_premium > 0 && ` / Rp ${(ev.price_premium/1000).toFixed(0)}k`}
-                      </div>
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <button onClick={() => onNavigate('admin_edit_event', ev)} style={{ fontSize: 11, fontWeight: 700, color: '#0070F3', background: '#EFF6FF', border: 'none', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>Edit</button>
-                      </div>
-                    </div>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                      <thead>
+                        <tr style={{ backgroundColor: '#F8FAFC', borderBottom: '2px solid #EAF0F6' }}>
+                          {['No', 'Nama Event', 'Waktu Pelaksanaan', 'Kategori', 'Harga', 'Status', 'Aksi'].map(h => (
+                            <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 800, color: '#64748B', whiteSpace: 'nowrap', fontSize: 11, letterSpacing: '0.04em' }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredEvents.map((ev, idx) => {
+                          const TYPE_LABEL = {
+                            training:         { label: 'Training',      bg: '#EFF6FF', color: '#1D4ED8' },
+                            webinar_reguler:  { label: 'W. Reguler',    bg: '#F0FDF4', color: '#15803D' },
+                            webinar_advanced: { label: 'W. Advanced',   bg: '#FFFBEB', color: '#B45309' },
+                          };
+                          const typeStyle = TYPE_LABEL[ev.type] || { label: ev.type, bg: '#F1F5F9', color: '#64748B' };
+                          const harga = ev.price_regular === 0
+                            ? 'Gratis'
+                            : `Rp ${(ev.price_regular/1000).toFixed(0)}k`
+                              + (ev.price_premium > 0 ? ` / Rp ${(ev.price_premium/1000).toFixed(0)}k` : '');
+                          return (
+                            <tr key={ev.id} style={{ borderBottom: '1px solid #F1F5F9', transition: 'background 0.1s' }}
+                              onMouseEnter={e => e.currentTarget.style.backgroundColor = '#FAFBFC'}
+                              onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                            >
+                              <td style={{ padding: '10px 14px', color: '#94A3B8', fontWeight: 600, width: 36 }}>{idx + 1}</td>
+                              <td style={{ padding: '10px 14px', maxWidth: 240 }}>
+                                <div style={{ fontWeight: 700, color: '#0F172A', fontSize: 12, lineHeight: 1.4 }}>{ev.title}</div>
+                              </td>
+                              <td style={{ padding: '10px 14px', color: '#64748B', whiteSpace: 'nowrap' }}>
+                                {ev.event_date
+                                  ? new Date(ev.event_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+                                  : <span style={{ color: '#CBD5E1' }}>—</span>}
+                              </td>
+                              <td style={{ padding: '10px 14px' }}>
+                                <span style={{ fontSize: 10, fontWeight: 800, padding: '3px 8px', borderRadius: 6, backgroundColor: typeStyle.bg, color: typeStyle.color }}>
+                                  {typeStyle.label}
+                                </span>
+                              </td>
+                              <td style={{ padding: '10px 14px', fontWeight: 700, color: ev.price_regular === 0 ? '#15803D' : '#0F172A', whiteSpace: 'nowrap' }}>
+                                {harga}
+                              </td>
+                              <td style={{ padding: '10px 14px' }}>
+                                <button
+                                  onClick={() => toggleEventActive(ev)}
+                                  title={ev.is_active ? 'Klik untuk Nonaktifkan' : 'Klik untuk Aktifkan'}
+                                  style={{
+                                    display: 'inline-flex', alignItems: 'center', gap: 5,
+                                    fontSize: 10, fontWeight: 800, padding: '4px 10px', borderRadius: 99,
+                                    border: 'none', cursor: 'pointer',
+                                    backgroundColor: ev.is_active ? '#F0FDF4' : '#F8FAFC',
+                                    color: ev.is_active ? '#15803D' : '#94A3B8',
+                                    transition: 'all 0.15s',
+                                  }}
+                                >
+                                  <span style={{ width: 7, height: 7, borderRadius: '50%', backgroundColor: ev.is_active ? '#22C55E' : '#CBD5E1', flexShrink: 0 }} />
+                                  {ev.is_active ? 'Aktif' : 'Nonaktif'}
+                                </button>
+                              </td>
+                              <td style={{ padding: '10px 14px' }}>
+                                <button
+                                  onClick={() => onNavigate('admin_edit_event', ev)}
+                                  style={{ fontSize: 11, fontWeight: 700, color: '#0070F3', background: '#EFF6FF', border: 'none', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                                >
+                                  ✏️ Edit
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   </div>
-                ))}
+                )}
               </div>
             </div>
           )}
+
+          {/* ── TAB: Data User ── */}
+          {!loading && tab === 'users' && (() => {
+            const STATUS_LABEL = { pending: 'Menunggu', verified: 'Terverifikasi', paid: 'Terbayar', attended: 'Hadir', quiz_unlocked: 'Kuis Terbuka', completed: 'Selesai', rejected: 'Ditolak' };
+            const TYPE_ICON = { training: '🏥', webinar_reguler: '🎤', webinar_advanced: '⭐' };
+            const filtered = userStats.filter(u => {
+              const q = userSearch.toLowerCase();
+              return !q || (u.name || '').toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q) || (u.job_role || '').toLowerCase().includes(q);
+            });
+            return (
+              <div>
+                {/* Header */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
+                  <h2 style={{ fontWeight: 900, color: 'var(--c-dark)', margin: 0, fontSize: 20 }}>👥 Data User</h2>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <span style={{ fontSize: 12, color: 'var(--c-muted)' }}>{filtered.length} dari {userStats.length} user</span>
+                    <button
+                      onClick={() => { loadAll(); }}
+                      style={{ fontSize: 12, fontWeight: 700, color: '#0070F3', background: '#EFF6FF', border: 'none', borderRadius: 8, padding: '7px 12px', cursor: 'pointer' }}
+                    >
+                      ↻ Refresh
+                    </button>
+                    <button
+                      onClick={downloadUsersExcel}
+                      style={{ display: 'flex', alignItems: 'center', gap: 6, backgroundColor: '#16A34A', color: 'white', border: 'none', borderRadius: 10, padding: '9px 16px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      ⬇ Download Excel
+                    </button>
+                  </div>
+                </div>
+
+                {/* Search */}
+                <div style={{ backgroundColor: 'white', borderRadius: 12, border: '1px solid #EAF0F6', padding: '10px 14px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ color: '#94A3B8', fontSize: 14 }}>🔍</span>
+                  <input
+                    type="text"
+                    value={userSearch}
+                    onChange={e => setUserSearch(e.target.value)}
+                    placeholder="Cari nama, email, atau jabatan..."
+                    style={{ border: 'none', outline: 'none', fontSize: 13, color: '#0F172A', flex: 1, fontFamily: "'Inter', sans-serif", backgroundColor: 'transparent' }}
+                  />
+                  {userSearch && <button onClick={() => setUserSearch('')} style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#94A3B8', fontSize: 14 }}>×</button>}
+                </div>
+
+                {/* Tabel User */}
+                <div style={{ backgroundColor: 'white', borderRadius: 16, border: '1px solid #EAF0F6', overflow: 'hidden' }}>
+                  {filtered.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '48px 20px', color: 'var(--c-muted)', fontSize: 13 }}>
+                      <div style={{ fontSize: 32, marginBottom: 8 }}>👥</div>Belum ada data user
+                    </div>
+                  ) : (
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                        <thead>
+                          <tr style={{ backgroundColor: '#F8FAFC', borderBottom: '2px solid #EAF0F6' }}>
+                            {['No','Nama & Jabatan','Email','Total Event','Selesai','Total Pengeluaran','Channel','Aksi'].map(h => (
+                              <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 800, color: '#64748B', whiteSpace: 'nowrap', fontSize: 11, letterSpacing: '0.04em' }}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filtered.map((u, idx) => (
+                            <tr key={u.id}
+                              style={{ borderBottom: '1px solid #F1F5F9', transition: 'background 0.1s', cursor: 'pointer' }}
+                              onMouseEnter={e => e.currentTarget.style.backgroundColor = '#FAFBFC'}
+                              onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                            >
+                              <td style={{ padding: '10px 14px', color: '#94A3B8', fontWeight: 600, width: 36 }}>{idx + 1}</td>
+                              <td style={{ padding: '10px 14px', minWidth: 160 }}>
+                                <div style={{ fontWeight: 800, color: '#0F172A', fontSize: 12 }}>{u.name || '—'}</div>
+                                <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 1 }}>{u.job_role || 'Profesional Industri'}</div>
+                              </td>
+                              <td style={{ padding: '10px 14px', color: '#64748B', fontSize: 11 }}>{u.email || '—'}</td>
+                              <td style={{ padding: '10px 14px', textAlign: 'center' }}>
+                                <span style={{ fontWeight: 800, color: '#0F172A' }}>{u.regs.length}</span>
+                              </td>
+                              <td style={{ padding: '10px 14px', textAlign: 'center' }}>
+                                <span style={{ fontWeight: 800, color: u.completedCount > 0 ? '#15803D' : '#94A3B8' }}>{u.completedCount}</span>
+                              </td>
+                              <td style={{ padding: '10px 14px', fontWeight: 800, whiteSpace: 'nowrap', color: u.totalSpend > 0 ? '#0F172A' : '#94A3B8' }}>
+                                {u.totalSpend > 0 ? `Rp ${u.totalSpend.toLocaleString('id-ID')}` : 'Gratis'}
+                              </td>
+                              <td style={{ padding: '10px 14px', maxWidth: 120 }}>
+                                {u.channels.length > 0
+                                  ? u.channels.map(ch => (
+                                      <span key={ch} style={{ display: 'inline-block', fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4, backgroundColor: '#F1F5F9', color: '#475569', marginRight: 4, marginBottom: 2 }}>{ch}</span>
+                                    ))
+                                  : <span style={{ color: '#94A3B8', fontSize: 11 }}>Gratis</span>
+                                }
+                              </td>
+                              <td style={{ padding: '10px 14px' }}>
+                                <button
+                                  onClick={() => setSelectedUser(u)}
+                                  style={{ fontSize: 11, fontWeight: 700, color: '#0070F3', background: '#EFF6FF', border: 'none', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                                >
+                                  🔎 Detail
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* ── TAB: Registrasi ── */}
           {!loading && tab === 'registrations' && (
@@ -570,6 +780,102 @@ export default function AdminDashboard({ onNavigate }) {
           )}
         </div>
       </div>
+
+      {/* ── Modal Detail User ── */}
+      {selectedUser && (
+        <div
+          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', justifyContent: 'flex-end' }}
+          onClick={e => { if (e.target === e.currentTarget) setSelectedUser(null); }}
+        >
+          <div style={{
+            width: '100%', maxWidth: 520,
+            backgroundColor: 'white', height: '100%', overflowY: 'auto',
+            boxShadow: '-8px 0 40px rgba(0,0,0,0.15)',
+            fontFamily: "'Inter', sans-serif",
+            animation: 'slideIn 0.25s ease',
+          }}>
+            {/* Header modal */}
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid #EAF0F6', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, backgroundColor: 'white', zIndex: 10 }}>
+              <div>
+                <div style={{ fontWeight: 900, fontSize: 16, color: '#0F172A' }}>{selectedUser.name || '—'}</div>
+                <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>{selectedUser.email} • {selectedUser.job_role || 'Profesional Industri'}</div>
+              </div>
+              <button onClick={() => setSelectedUser(null)} style={{ background: '#F1F5F9', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 16, cursor: 'pointer', color: '#64748B' }}>×</button>
+            </div>
+
+            <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+              {/* Stat cards */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
+                {[
+                  { label: 'Total Event', value: selectedUser.regs.length, color: '#0070F3' },
+                  { label: 'Selesai', value: selectedUser.completedCount, color: '#15803D' },
+                  { label: 'Pengeluaran', value: selectedUser.totalSpend > 0 ? `Rp ${(selectedUser.totalSpend/1000).toFixed(0)}k` : 'Gratis', color: selectedUser.totalSpend > 0 ? '#B45309' : '#15803D' },
+                ].map(s => (
+                  <div key={s.label} style={{ backgroundColor: '#F8FAFC', borderRadius: 12, padding: '12px 14px', border: '1px solid #EAF0F6' }}>
+                    <div style={{ fontSize: 16, fontWeight: 900, color: s.color }}>{s.value}</div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', marginTop: 2, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Channel pembayaran */}
+              {selectedUser.channels.length > 0 && (
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>Channel Pembayaran</div>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    {selectedUser.channels.map(ch => (
+                      <span key={ch} style={{ fontSize: 11, fontWeight: 700, padding: '4px 12px', borderRadius: 8, backgroundColor: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE' }}>{ch}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Daftar aktivitas event */}
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 10 }}>Aktivitas Training & Webinar</div>
+                {selectedUser.regs.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '24px', color: '#94A3B8', fontSize: 12, backgroundColor: '#F8FAFC', borderRadius: 12 }}>Belum ada registrasi</div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {selectedUser.regs.map(reg => {
+                      const STATUS_LABEL = { pending: 'Menunggu', verified: 'Terverifikasi', paid: 'Terbayar', attended: 'Hadir', quiz_unlocked: 'Kuis Terbuka', completed: 'Selesai', rejected: 'Ditolak' };
+                      const STATUS_COLOR = { pending: '#D97706', verified: '#1D4ED8', paid: '#0070F3', attended: '#15803D', quiz_unlocked: '#DC2626', completed: '#15803D', rejected: '#EF4444' };
+                      const TYPE_BADGE = { training: { label: 'Training', bg: '#EFF6FF', color: '#1D4ED8' }, webinar_reguler: { label: 'W. Reguler', bg: '#F0FDF4', color: '#15803D' }, webinar_advanced: { label: 'W. Advanced', bg: '#FFFBEB', color: '#B45309' } };
+                      const typeBadge = TYPE_BADGE[reg.events?.type] || { label: reg.events?.type || '?', bg: '#F1F5F9', color: '#64748B' };
+                      const amount = reg.payment?.amount;
+                      return (
+                        <div key={reg.id} style={{ border: '1px solid #EAF0F6', borderRadius: 12, padding: '12px 14px', backgroundColor: '#FAFBFC' }}>
+                          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 6 }}>
+                            <div style={{ fontWeight: 700, fontSize: 12, color: '#0F172A', lineHeight: 1.4, flex: 1 }}>{reg.events?.title || 'Event tidak ditemukan'}</div>
+                            <span style={{ fontSize: 9, fontWeight: 800, padding: '2px 8px', borderRadius: 4, backgroundColor: typeBadge.bg, color: typeBadge.color, flexShrink: 0, whiteSpace: 'nowrap' }}>{typeBadge.label}</span>
+                          </div>
+                          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                            <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 6, backgroundColor: '#F1F5F9', color: STATUS_COLOR[reg.status] || '#64748B' }}>
+                              {STATUS_LABEL[reg.status] || reg.status}
+                            </span>
+                            {reg.events?.event_date && (
+                              <span style={{ fontSize: 10, color: '#94A3B8' }}>
+                                📅 {new Date(reg.events.event_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                              </span>
+                            )}
+                            {amount > 0 && (
+                              <span style={{ fontSize: 10, fontWeight: 700, color: '#B45309', marginLeft: 'auto' }}>Rp {amount.toLocaleString('id-ID')}</span>
+                            )}
+                            {amount === 0 && <span style={{ fontSize: 10, color: '#15803D', fontWeight: 700, marginLeft: 'auto' }}>Gratis</span>}
+                            {reg.payment?.payment_method && (
+                              <span style={{ fontSize: 9, padding: '1px 5px', borderRadius: 3, backgroundColor: '#EFF6FF', color: '#1D4ED8', fontWeight: 700 }}>{reg.payment.payment_method}</span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -67,6 +67,9 @@ export default function AdminEventForm({ onNavigate, existingEvent }) {
     target_peserta:   existingEvent?.target_peserta || '',
     // ── Galeri (training saja, satu baris = satu URL) ──
     gallery_images:   existingEvent?.gallery_images || '',
+    // ── Fasilitas Tambahan ──
+    extra_link:       existingEvent?.extra_link      || '',
+    extra_link_label: existingEvent?.extra_link_label || '',
   });
 
   // ── State Kuis ───────────────────────────────────────────────
@@ -98,6 +101,8 @@ export default function AdminEventForm({ onNavigate, existingEvent }) {
       image_url:           form.image_url        || null,
       waktu:               form.waktu            || null,
       gallery_images:      form.gallery_images   || null,
+      extra_link:          form.extra_link       || null,
+      extra_link_label:    form.extra_link_label || null,
       price_regular:       Number(form.price_regular) || 0,
       price_premium:       Number(form.price_premium) || 0,
       max_participants:    form.max_participants ? Number(form.max_participants) : null,
@@ -246,6 +251,17 @@ export default function AdminEventForm({ onNavigate, existingEvent }) {
               <input value={form.zoom_link} onChange={e => set('zoom_link', e.target.value)}
                 placeholder="https://us02web.zoom.us/j/..." style={inputStyle} />
             </Field>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16 }}>
+              <Field label="LINK FASILITAS TAMBAHAN" hint="Contoh: link grup WA, Google Drive, e-book, dsb">
+                <input value={form.extra_link} onChange={e => set('extra_link', e.target.value)}
+                  placeholder="https://drive.google.com/..." style={inputStyle} />
+              </Field>
+              <Field label="LABEL TOMBOL" hint="Teks tombol yang ditampilkan ke peserta">
+                <input value={form.extra_link_label} onChange={e => set('extra_link_label', e.target.value)}
+                  placeholder="📂 Materi" style={inputStyle} />
+              </Field>
+            </div>
           </div>
 
           {/* ── 4. Harga ── */}

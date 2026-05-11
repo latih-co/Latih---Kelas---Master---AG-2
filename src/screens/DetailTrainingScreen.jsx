@@ -97,7 +97,7 @@ export default function DetailTrainingScreen({ training, onBack, onNavigate, isG
               </div>
               <div>
                 <div style={{ fontSize: 11, color: 'var(--c-muted)', fontWeight: 600, marginBottom: 2 }}>Waktu</div>
-                <div style={{ fontSize: 13, color: 'var(--c-dark)', fontWeight: 700 }}>19:00 - 21:00 WIB</div>
+                <div style={{ fontSize: 13, color: 'var(--c-dark)', fontWeight: 700 }}>{training.waktu || training.stats?.waktu || "Lihat detail"}</div>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
