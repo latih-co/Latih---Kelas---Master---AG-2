@@ -271,8 +271,8 @@ export default function PaymentModal({ event, onClose, onNavigate, initialPackag
           {hasPremium && (
             <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
               {[
-                { key: 'free',    label: 'Paket Free',    price: event.price_regular, desc: 'Akses recording & sertifikat webinar' },
-                { key: 'premium', label: 'Paket Premium', price: event.price_premium, desc: 'Q&A langsung + konsultasi + materi eksklusif' },
+                { key: 'free',    label: 'Paket Free',    price: event.price_regular, desc: 'Akses recording' },
+                { key: 'premium', label: 'Paket Premium', price: event.price_premium, desc: 'Q&A langsung + materi eksklusif + sertifikat' },
               ].map(pkg => (
                 <button key={pkg.key} onClick={() => setPkg(pkg.key)} style={{ flex: 1, padding: '16px 12px', borderRadius: 14, border: selectedPkg === pkg.key ? '2px solid #0070F3' : '1px solid #E2E8F0', background: selectedPkg === pkg.key ? '#EFF6FF' : 'white', cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s' }}>
                   <div style={{ fontWeight: 800, color: selectedPkg === pkg.key ? '#1D4ED8' : 'var(--c-dark)', fontSize: 14, marginBottom: 4 }}>{pkg.label}</div>
@@ -353,7 +353,7 @@ function ModalWrapper({ children, onClose, title }) {
       <div style={{ backgroundColor: 'white', borderRadius: 20, padding: '28px 24px', width: '100%', maxWidth: 480, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 25px 60px rgba(0,0,0,0.2)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
           <div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#0070F3', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>Pendaftaran Event</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#0070F3', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>Pendaftaran Program</div>
             {title && <div style={{ fontWeight: 900, color: 'var(--c-dark)', fontSize: 16, lineHeight: 1.3, maxWidth: 340 }}>{title}</div>}
           </div>
           <button onClick={onClose} style={{ background: '#F1F5F9', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', fontSize: 16, color: 'var(--c-muted)', flexShrink: 0 }}>✕</button>
