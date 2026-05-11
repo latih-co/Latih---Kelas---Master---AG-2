@@ -28,6 +28,8 @@ if (empty($rawBody)) {
 }
 
 // Teruskan ke Supabase Edge Function
+$SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpuZ2NjaXBxc3BwdWdrdmdzdHNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NzcxNzMsImV4cCI6MjA5MDQ1MzE3M30.BQ3lV_RNnckgcocMrd5-MXvL2fx4bc2vRO5hYMIzqSw';
+
 $ch = curl_init($SUPABASE_WEBHOOK_URL);
 curl_setopt_array($ch, [
     CURLOPT_POST           => true,
@@ -37,6 +39,7 @@ curl_setopt_array($ch, [
     CURLOPT_HTTPHEADER     => [
         'Content-Type: application/json',
         'X-Callback-Signature: ' . $signature,
+        'Authorization: Bearer ' . $SUPABASE_ANON_KEY,
     ],
 ]);
 
