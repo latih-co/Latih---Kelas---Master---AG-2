@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PAYMENT_METHODS, createPayment, registerFreeEvent, registerFreeDirectly, getRegistrationStatus, simulatePayment } from '../services/payment';
+import { PAYMENT_METHODS, createPayment, registerFreeEvent, registerFreeDirectly, getRegistrationStatus } from '../services/payment';
 import { useUser } from '../context/UserContext';
 
 const STATUS_INFO = {
@@ -74,15 +74,6 @@ export default function PaymentModal({ event, onClose, onNavigate, initialPackag
     setStep('redirect');
   };
 
-  // ⚠️ DEV ONLY — HAPUS SEBELUM LAUNCH
-  const handleSimulate = async () => {
-    setLoading(true); setError('');
-    const result = await simulatePayment(event.id, selectedPkg);
-    setLoading(false);
-    if (result.error) { setError(result.error); return; }
-    setStep('sim_done');
-  };
-  // ⚠️ END DEV ONLY
 
   const handleFreeRegister = async () => {
     if (!igUsername.trim() || !igUsername.startsWith('@')) { setError('Masukkan username Instagram dengan @'); return; }
@@ -342,35 +333,6 @@ export default function PaymentModal({ event, onClose, onNavigate, initialPackag
               {loading ? '⏳ Memproses...' : '💳 Bayar Sekarang'}
             </button>
           </div>
-          {/* ⚠️ DEV ONLY */}
-          <div style={{ marginTop: 16, borderTop: '1px dashed #E2E8F0', paddingTop: 12 }}>
-            <div style={{ fontSize: 10, color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, textAlign: 'center' }}>
-              ⚠️ Dev Tools
-            </div>
-            <button
-              onClick={handleSimulate}
-              disabled={loading}
-              style={{ width: '100%', padding: '10px 0', borderRadius: 10, border: '1.5px dashed #94A3B8', background: '#F8FAFC', color: '#475569', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
-            >
-              {loading ? '⏳ Memproses...' : '🧪 Simulasi Terbayar (Tanpa Bayar)'}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ── Simulasi sukses (DEV ONLY) ── */}
-      {!loading && step === 'sim_done' && (
-        <div style={{ textAlign: 'center', padding: '24px 0' }}>
-          <div style={{ fontSize: 48, marginBottom: 12 }}>🧪</div>
-          <div style={{ fontWeight: 900, color: 'var(--c-dark)', fontSize: 18, marginBottom: 8 }}>Simulasi Berhasil!</div>
-          <div style={{ fontSize: 13, color: 'var(--c-muted)', lineHeight: 1.6, marginBottom: 8 }}>
-            Registrasi dibuat dengan status <strong>Terbayar</strong>.<br />
-            Admin perlu <strong>Tandai Hadir</strong> → lalu <strong>Buka Kuis</strong> di Admin Panel.
-          </div>
-          <div style={{ background: '#FEF3C7', border: '1px solid #FCD34D', borderRadius: 10, padding: '10px 14px', fontSize: 12, color: '#92400E', marginBottom: 20 }}>
-            ⚠️ Mode Simulasi — hanya untuk testing. Hapus sebelum launch.
-          </div>
-          <button onClick={() => { onClose(); onNavigate?.('profil'); }} style={btnStyle('#0070F3')}>Lihat Status di Profil →</button>
         </div>
       )}
 

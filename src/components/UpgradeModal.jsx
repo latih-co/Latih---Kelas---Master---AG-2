@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PAYMENT_METHODS, createUpgradePayment, simulateUpgrade } from '../services/payment';
+import { PAYMENT_METHODS, createUpgradePayment } from '../services/payment';
 
 /**
  * UpgradeModal — modal upgrade paket Free → Premium untuk Webinar Advanced
@@ -17,7 +17,6 @@ export default function UpgradeModal({ registration, onClose, onUpgraded }) {
   const [payUrl,    setPayUrl]  = useState('');
   const [errMsg,    setErrMsg]  = useState('');
   const [loading,   setLoading] = useState(false);
-  const [simLoading, setSimLoading] = useState(false);
 
   const fmt = (n) => new Intl.NumberFormat('id-ID').format(n);
 
@@ -36,19 +35,6 @@ export default function UpgradeModal({ registration, onClose, onUpgraded }) {
     onUpgraded?.();
   };
 
-  // ⚠️ DEV ONLY: Simulasi upgrade tanpa bayar
-  const handleSimulate = async () => {
-    setSimLoading(true);
-    const result = await simulateUpgrade(registration.id);
-    setSimLoading(false);
-    if (result.error) {
-      setErrMsg(result.error);
-      setStep('error');
-      return;
-    }
-    setStep('sim_success');
-    onUpgraded?.();
-  };
 
   // ─── Overlay style ──────────────────────────────────────────────
   const overlay = {
@@ -136,24 +122,6 @@ export default function UpgradeModal({ registration, onClose, onUpgraded }) {
             <button onClick={onClose} style={{ ...btn('white', '#94A3B8'), border: '1px solid #E2E8F0', marginTop: 8 }}>
               Batal
             </button>
-
-            {/* ⚠️ DEV ONLY */}
-            <div style={{ marginTop: 16, borderTop: '1px dashed #E2E8F0', paddingTop: 12 }}>
-              <div style={{ fontSize: 10, color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, textAlign: 'center' }}>
-                ⚠️ Dev Tools
-              </div>
-              <button
-                onClick={handleSimulate}
-                disabled={simLoading}
-                style={{
-                  width: '100%', padding: '10px 0', borderRadius: 10,
-                  border: '1.5px dashed #94A3B8', backgroundColor: '#F8FAFC',
-                  color: '#475569', fontSize: 12, fontWeight: 700, cursor: 'pointer',
-                }}
-              >
-                {simLoading ? '⏳ Memproses...' : '🧪 Simulasi Upgrade (Tanpa Bayar)'}
-              </button>
-            </div>
           </>
         )}
 
@@ -175,23 +143,6 @@ export default function UpgradeModal({ registration, onClose, onUpgraded }) {
             )}
             <button onClick={onClose} style={{ ...btn('white', '#94A3B8'), border: '1px solid #E2E8F0', marginTop: 10 }}>
               Tutup
-            </button>
-          </div>
-        )}
-
-        {/* Step: sim_success (simulasi dev) */}
-        {step === 'sim_success' && (
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>🧪</div>
-            <div style={{ fontSize: 16, fontWeight: 900, color: '#15803D', marginBottom: 8 }}>Simulasi Berhasil!</div>
-            <div style={{ fontSize: 13, color: '#64748B', marginBottom: 8, lineHeight: 1.6 }}>
-              Registrasi kamu sudah di-upgrade ke <strong>Premium</strong> dan kuis sudah terbuka.
-            </div>
-            <div style={{ fontSize: 11, color: '#92400E', background: '#FEF3C7', border: '1px solid #FDE68A', borderRadius: 8, padding: '8px 12px', marginBottom: 20 }}>
-              ⚠️ Mode simulasi — tidak ada transaksi nyata
-            </div>
-            <button onClick={onClose} style={btn('#15803D')}>
-              ✅ Cek Aktivitas di Profil
             </button>
           </div>
         )}
