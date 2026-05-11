@@ -290,20 +290,6 @@ export default function PaymentModal({ event, onClose, onNavigate, initialPackag
           <button onClick={() => setStep('choose_method')} style={btnStyle('#0070F3')}>
             Pilih Metode Bayar →
           </button>
-
-          {/* ⚠️ DEV ONLY */}
-          <div style={{ marginTop: 16, borderTop: '1px dashed #E2E8F0', paddingTop: 12 }}>
-            <div style={{ fontSize: 10, color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, textAlign: 'center' }}>
-              ⚠️ Dev Tools
-            </div>
-            <button
-              onClick={handleSimulate}
-              disabled={loading}
-              style={{ width: '100%', padding: '10px 0', borderRadius: 10, border: '1.5px dashed #94A3B8', background: '#F8FAFC', color: '#475569', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
-            >
-              {loading ? '⏳ Memproses...' : '🧪 Simulasi Terbayar (Tanpa Bayar)'}
-            </button>
-          </div>
         </div>
       )}
 
