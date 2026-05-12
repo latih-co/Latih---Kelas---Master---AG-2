@@ -226,7 +226,8 @@ export default function PaymentModal({ event, onClose, onNavigate, initialPackag
       {!loading && step === 'resume_payment' && (() => {
         const tripayRef    = regStatus?.tripay_reference;
         const checkoutLink = tripayRef ? `https://tripay.co.id/checkout/${tripayRef}` : null;
-        const methodName   = regStatus?.tripay_payment_method || '';
+        const rawMethod    = regStatus?.tripay_payment_method || '';
+        const methodName   = PAYMENT_METHODS.find(m => m.code === rawMethod)?.label || rawMethod;
         return (
           <div>
             <div style={{ background: '#FEF3C7', border: '1px solid #FCD34D', borderRadius: 12, padding: 16, marginBottom: 20, display: 'flex', gap: 12 }}>
@@ -234,7 +235,7 @@ export default function PaymentModal({ event, onClose, onNavigate, initialPackag
               <div>
                 <div style={{ fontWeight: 800, color: '#92400E', marginBottom: 4 }}>Pembayaran Belum Selesai</div>
                 <div style={{ fontSize: 12, color: '#78350F', lineHeight: 1.5 }}>
-                  Transaksi Tripay sudah dibuat{methodName ? ` via ${methodName}` : ''}. Lanjutkan pembayaran di halaman Tripay.
+                  Transaksi sudah dibuat{methodName ? ` via ${methodName}` : ''}.
                 </div>
               </div>
             </div>
