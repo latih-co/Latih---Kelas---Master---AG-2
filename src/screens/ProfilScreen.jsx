@@ -8,7 +8,7 @@ import { generateCertPDF, downloadCertPDF, CERT_TYPES } from '../services/certif
 
 export default function ProfilScreen({ onNavigate }) {
   const isMobile = useIsMobile();
-  const { user, xp, streak, signOut } = useUser();
+  const { user, xp, streak, signOut, updateProfile } = useUser();
 
   const [certificates, setCertificates]     = useState([]);
   const [registrations, setRegistrations]   = useState([]);
@@ -18,6 +18,9 @@ export default function ProfilScreen({ onNavigate }) {
   const [quizTarget, setQuizTarget]         = useState(null);
   const [upgradeTarget, setUpgradeTarget]   = useState(null);
   const [dlLoading, setDlLoading]           = useState(''); // cert_number sedang didownload
+  const [editWa, setEditWa]                 = useState(false);
+  const [waInput, setWaInput]               = useState('');
+  const [waSaving, setWaSaving]             = useState(false);
 
   const loadData = useCallback(async () => {
     if (!user) return;
@@ -205,7 +208,78 @@ export default function ProfilScreen({ onNavigate }) {
           </div>
         </div>
 
+        {/* ── Info Kontak ── */}
+        <div style={{ backgroundColor: 'white', borderRadius: 16, border: '1px solid #EAF0F6', boxShadow: '0 2px 8px rgba(0,0,0,0.02)', overflow: 'hidden' }}>
+          <div style={{ padding: '14px 20px', borderBottom: '1px solid #EAF0F6', fontSize: 14, fontWeight: 800, color: 'var(--c-dark)' }}>
+            📇 Info Kontak
+          </div>
+          <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {/* Email — read only */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ fontSize: 18 }}>✉️</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--c-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>Email</div>
+                <div style={{ fontSize: 13, color: 'var(--c-dark)', fontWeight: 600 }}>{user.email}</div>
+              </div>
+            </div>
+
+            {/* WhatsApp — editable */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ fontSize: 18 }}>📱</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--c-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>WhatsApp</div>
+                {editWa ? (
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <input
+                      type="tel"
+                      value={waInput}
+                      onChange={e => setWaInput(e.target.value)}
+                      placeholder="08123456789"
+                      autoFocus
+                      style={{
+                        flex: 1, padding: '7px 12px', borderRadius: 8,
+                        border: '1.5px solid #0070F3', outline: 'none',
+                        fontSize: 13, color: '#0F172A',
+                      }}
+                    />
+                    <button
+                      onClick={async () => {
+                        setWaSaving(true);
+                        await updateProfile({ whatsapp: waInput.trim() || null });
+                        setWaSaving(false); setEditWa(false);
+                      }}
+                      disabled={waSaving}
+                      style={{ padding: '7px 14px', borderRadius: 8, background: '#0070F3', color: 'white', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      {waSaving ? '⏳' : '✓ Simpan'}
+                    </button>
+                    <button
+                      onClick={() => setEditWa(false)}
+                      style={{ padding: '7px 12px', borderRadius: 8, background: 'white', color: '#64748B', border: '1px solid #EAF0F6', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      Batal
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ fontSize: 13, color: user.whatsapp ? 'var(--c-dark)' : 'var(--c-muted)', fontWeight: user.whatsapp ? 600 : 400 }}>
+                      {user.whatsapp || 'Belum ditambahkan'}
+                    </span>
+                    <button
+                      onClick={() => { setWaInput(user.whatsapp || ''); setEditWa(true); }}
+                      style={{ padding: '4px 10px', borderRadius: 6, background: '#F8FAFC', color: '#64748B', border: '1px solid #EAF0F6', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      {user.whatsapp ? '✏️ Edit' : '+ Tambah'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 24, alignItems: 'start' }}>
+
 
           <div style={{ backgroundColor: 'white', borderRadius: 16, border: '1px solid #EAF0F6', boxShadow: '0 2px 8px rgba(0,0,0,0.02)', overflow: 'hidden' }}>
             <div style={{ padding: '16px 20px', borderBottom: '1px solid #EAF0F6', fontSize: 14, fontWeight: 800, color: 'var(--c-dark)' }}>
