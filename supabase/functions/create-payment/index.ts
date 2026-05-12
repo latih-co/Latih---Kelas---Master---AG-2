@@ -136,7 +136,7 @@ serve(async (req) => {
           price:    amount,
           quantity: 1,
         }],
-        callback_url: `${Deno.env.get("SUPABASE_URL")}/functions/v1/tripay-webhook`,
+        callback_url: `${APP_URL}/tripay-callback.php`,
         return_url:   `${APP_URL}`,
         expired_time: expiredTime,
         signature:    signature,
