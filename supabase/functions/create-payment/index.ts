@@ -137,7 +137,7 @@ serve(async (req) => {
           customer_email: user.email,
           customer_phone: "",
           order_items: [{
-            name:     `${event.title} (${package_type})`,
+            name:     package_type === "premium" ? `${event.title} (Premium)` : event.title,
             price:    amount,
             quantity: 1,
           }],
