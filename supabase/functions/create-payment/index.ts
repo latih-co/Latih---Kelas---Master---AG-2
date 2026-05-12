@@ -142,7 +142,7 @@ serve(async (req) => {
             quantity: 1,
           }],
           callback_url: `${APP_URL}/tripay-callback.php`,
-          return_url:   `${APP_URL}`,
+          return_url:   `${APP_URL}?ref=${merchantRef}`,
           expired_time: expiredTime,
           signature:    signature,
         },

@@ -32,20 +32,27 @@ import AdminDashboard   from "./screens/admin/AdminDashboard";
 import AdminEventForm   from "./screens/admin/AdminEventForm";
 import CertVerifyScreen from "./screens/CertVerifyScreen";
 import WelcomeScreen    from "./screens/WelcomeScreen";
+import RincianPesananScreen from "./screens/RincianPesananScreen";
 
 export default function App() {
   const [page, setPage] = useState(() => {
-    // Detect ?verify= URL param (dari QR code PDF sertifikat)
     const urlParams = new URLSearchParams(window.location.search);
     const verifyCode = urlParams.get('verify');
     if (verifyCode) return 'cert_verify';
-    // Guest selalu mulai di landing — user login dihandle oleh useEffect([session])
+    // Detect return dari Tripay (?ref=LTC-xxx)
+    const payRef = urlParams.get('ref');
+    if (payRef && payRef.startsWith('LTC-')) return 'pesanan';
     return 'landing';
   });
 
   const [verifyCode] = useState(() => {
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get('verify') || '';
+  });
+
+  const [paymentRef] = useState(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('ref') || '';
   });
   
   const [activeTopic, setActiveTopic] = useState(() => {
@@ -370,6 +377,8 @@ export default function App() {
         return <AdminEventForm onNavigate={goPage} />;
       case "admin_edit_event":
         return <AdminEventForm onNavigate={goPage} existingEvent={activeAdminEvent} />;
+      case "pesanan":
+        return <RincianPesananScreen paymentRef={paymentRef} onNavigate={goPage} />;
       case "welcome":
         return (
           <WelcomeScreen
@@ -431,7 +440,7 @@ export default function App() {
   }
 
   // Khusus untuk landing, legal, auth, & admin pages → render full tanpa SidebarLayout
-  const FULL_SCREEN_PAGES = ['landing', 'terms', 'privacy', 'about', 'contact', 'login', 'register', 'admin', 'admin_new_event', 'admin_edit_event', 'cert_preview', 'cert_calibrator', 'cert_verify', 'welcome'];
+  const FULL_SCREEN_PAGES = ['landing', 'terms', 'privacy', 'about', 'contact', 'login', 'register', 'admin', 'admin_new_event', 'admin_edit_event', 'cert_preview', 'cert_calibrator', 'cert_verify', 'welcome', 'pesanan'];
   if (FULL_SCREEN_PAGES.includes(page)) {
     return (
       <>
