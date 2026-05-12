@@ -31,7 +31,7 @@ serve(async (req) => {
   }
 
   try {
-    const { event_id, package_type, payment_method, is_upgrade, existing_registration_id } = await req.json();
+    const { event_id, package_type, payment_method, is_upgrade, is_resume, existing_registration_id } = await req.json();
 
     // ── Inisialisasi Supabase admin client ──────────────────────
     const supabase = createClient(
@@ -62,8 +62,8 @@ serve(async (req) => {
 
     // ── Cek / buat registrasi ────────────────────────────────────
     let reg;
-    if (is_upgrade && existing_registration_id) {
-      // Mode upgrade: gunakan registrasi yang sudah ada, jangan buat baru
+    if ((is_upgrade || is_resume) && existing_registration_id) {
+      // Mode upgrade/resume: gunakan registrasi yang sudah ada, jangan buat baru
       const { data: existReg, error: existErr } = await supabase
         .from("registrations")
         .select("id, status, package")

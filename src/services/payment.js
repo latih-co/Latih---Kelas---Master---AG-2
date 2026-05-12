@@ -197,7 +197,7 @@ export async function getRegistrationStatus(eventId) {
 
   const { data } = await supabase
     .from('registrations')
-    .select('id, status, verify_code, ig_verified, zoom_sent')
+    .select('id, status, package, verify_code, ig_verified, zoom_sent')
     .eq('user_id', session.user.id)
     .eq('event_id', eventId)
     .maybeSingle();
@@ -235,3 +235,26 @@ export async function adminRegisterFree(eventId) {
   return { success: true };
 }
 
+/**
+ * Lanjutkan pembayaran yang pending (registrasi sudah ada, buat transaksi baru)
+ * Digunakan ketika user sebelumnya sudah mulai bayar tapi belum selesai.
+ */
+export async function createResumePayment(registrationId, eventId, packageType, paymentMethod = 'QRIS') {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return { error: 'Belum login' };
+
+  const response = await supabase.functions.invoke('create-payment', {
+    body: {
+      event_id:                 eventId,
+      package_type:             packageType,
+      payment_method:           paymentMethod,
+      is_resume:                true,
+      existing_registration_id: registrationId,
+    },
+  });
+
+  if (response.error) return { error: response.error.message || 'Gagal membuat pembayaran' };
+  const data = response.data;
+  if (!data?.success) return { error: data?.error || 'Tripay menolak transaksi ini' };
+  return { checkout_url: data.checkout_url, reference: data.reference, pay_url: data.pay_url };
+}

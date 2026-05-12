@@ -29,7 +29,7 @@ export default function ProfilScreen({ onNavigate }) {
 
       const { data: regs } = await supabase
         .from('registrations')
-        .select('*, events(title, type, event_date, image_url, zoom_link, extra_link, extra_link_label, quiz_questions, quiz_passing_score, silabus, price_premium)')
+        .select('*, events(title, type, event_date, waktu, image_url, zoom_link, extra_link, extra_link_label, quiz_questions, quiz_passing_score, silabus, price_premium)')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -260,11 +260,10 @@ export default function ProfilScreen({ onNavigate }) {
                   </div>
                   {reg.events?.event_date && (
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--c-muted)', fontWeight: 500, marginBottom: 6 }}>
-                      📅 {new Date(reg.events.event_date).toLocaleString('id-ID', {
+                      📅 {new Date(reg.events.event_date).toLocaleDateString('id-ID', {
                         day: 'numeric', month: 'long', year: 'numeric',
-                        hour: '2-digit', minute: '2-digit',
                         timeZone: 'Asia/Jakarta',
-                      })} WIB
+                      })}{reg.events.waktu ? ` pukul ${reg.events.waktu}` : ''} WIB
                     </div>
                   )}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PAYMENT_METHODS, createPayment, registerFreeEvent, registerFreeDirectly, getRegistrationStatus, adminRegisterFree } from '../services/payment';
+import { PAYMENT_METHODS, createPayment, registerFreeEvent, registerFreeDirectly, getRegistrationStatus, adminRegisterFree, createResumePayment } from '../services/payment';
 import { useUser } from '../context/UserContext';
 
 const STATUS_INFO = {
@@ -52,15 +52,23 @@ export default function PaymentModal({ event, onClose, onNavigate, initialPackag
       if (isWebinarReg) {
         setStep('free_register');
       } else if (initialPackage === 'premium' && event.price_premium > 0) {
-        // Klik "Pilih Premium" langsung ke pilih metode bayar
         setPkg('premium');
         setStep('choose_method');
       } else if (isWebinarAdv && event.price_regular === 0) {
-        // Webinar Advanced paket free (gratis) — HANYA untuk webinar_advanced
         setStep('free_direct');
       } else {
         setStep('choose_package');
       }
+    } else if (
+      status.status === 'pending' &&
+      !isWebinarReg &&
+      (
+        (isTraining && event.price_regular > 0) ||
+        (isWebinarAdv && status.package === 'premium' && event.price_premium > 0)
+      )
+    ) {
+      // Pembayaran pernah dimulai tapi belum selesai
+      setStep('resume_payment');
     } else {
       setStep('registered');
     }
@@ -82,6 +90,18 @@ export default function PaymentModal({ event, onClose, onNavigate, initialPackag
     setLoading(false);
     if (result.error) { setError(result.error); return; }
     setStep('admin_done');
+  };
+
+  // 🔄 Resume pembayaran yang pending
+  const handleResumePayment = async () => {
+    if (!regStatus) return;
+    setLoading(true); setError('');
+    const pkg = regStatus.package || 'free';
+    const result = await createResumePayment(regStatus.id, event.id, pkg, selectedMethod);
+    setLoading(false);
+    if (result.error) { setError(result.error); return; }
+    setCheckoutUrl(result.checkout_url || result.pay_url);
+    setStep('redirect');
   };
 
 
@@ -201,6 +221,35 @@ export default function PaymentModal({ event, onClose, onNavigate, initialPackag
           </div>
         );
       })()}
+
+      {/* ── Pembayaran pending — minta selesaikan ── */}
+      {!loading && step === 'resume_payment' && (
+        <div>
+          <div style={{ background: '#FEF3C7', border: '1px solid #FCD34D', borderRadius: 12, padding: 16, marginBottom: 20, display: 'flex', gap: 12 }}>
+            <div style={{ fontSize: 24 }}>⏳</div>
+            <div>
+              <div style={{ fontWeight: 800, color: '#92400E', marginBottom: 4 }}>Pembayaran Belum Selesai</div>
+              <div style={{ fontSize: 12, color: '#78350F', lineHeight: 1.5 }}>
+                Kamu sudah terdaftar tapi pembayaran belum dikonfirmasi Tripay. Pilih metode dan selesaikan pembayaran sekarang.
+              </div>
+            </div>
+          </div>
+          <div style={{ fontWeight: 700, color: 'var(--c-dark)', marginBottom: 12, fontSize: 14 }}>Pilih Metode Pembayaran</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
+            {PAYMENT_METHODS.map(m => (
+              <label key={m.code} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, border: `2px solid ${selectedMethod === m.code ? '#0070F3' : '#EAF0F6'}`, cursor: 'pointer', backgroundColor: selectedMethod === m.code ? '#EFF6FF' : 'white' }}>
+                <input type="radio" name="resume_method" value={m.code} checked={selectedMethod === m.code} onChange={() => setMethod(m.code)} style={{ accentColor: '#0070F3' }} />
+                <span style={{ fontSize: 22 }}>{m.icon}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--c-dark)' }}>{m.name}</span>
+              </label>
+            ))}
+          </div>
+          {error && <ErrorBox msg={error} />}
+          <button onClick={handleResumePayment} disabled={loading} style={btnStyle('#0070F3')}>
+            {loading ? '⏳ Memproses...' : '💳 Selesaikan Pembayaran'}
+          </button>
+        </div>
+      )}
 
       {/* ── Konfirmasi Daftar Gratis (Training harga 0) ── */}
       {!loading && step === 'free_direct' && (
