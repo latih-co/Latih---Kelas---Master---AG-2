@@ -222,34 +222,41 @@ export default function PaymentModal({ event, onClose, onNavigate, initialPackag
         );
       })()}
 
-      {/* ── Pembayaran pending — minta selesaikan ── */}
-      {!loading && step === 'resume_payment' && (
-        <div>
-          <div style={{ background: '#FEF3C7', border: '1px solid #FCD34D', borderRadius: 12, padding: 16, marginBottom: 20, display: 'flex', gap: 12 }}>
-            <div style={{ fontSize: 24 }}>⏳</div>
-            <div>
-              <div style={{ fontWeight: 800, color: '#92400E', marginBottom: 4 }}>Pembayaran Belum Selesai</div>
-              <div style={{ fontSize: 12, color: '#78350F', lineHeight: 1.5 }}>
-                Kamu sudah terdaftar tapi pembayaran belum dikonfirmasi Tripay. Pilih metode dan selesaikan pembayaran sekarang.
+      {/* ── Pembayaran pending — lanjutkan ke Tripay ── */}
+      {!loading && step === 'resume_payment' && (() => {
+        const tripayRef    = regStatus?.tripay_reference;
+        const checkoutLink = tripayRef ? `https://tripay.co.id/checkout/${tripayRef}` : null;
+        const methodName   = regStatus?.tripay_payment_method || '';
+        return (
+          <div>
+            <div style={{ background: '#FEF3C7', border: '1px solid #FCD34D', borderRadius: 12, padding: 16, marginBottom: 20, display: 'flex', gap: 12 }}>
+              <div style={{ fontSize: 24 }}>⏳</div>
+              <div>
+                <div style={{ fontWeight: 800, color: '#92400E', marginBottom: 4 }}>Pembayaran Belum Selesai</div>
+                <div style={{ fontSize: 12, color: '#78350F', lineHeight: 1.5 }}>
+                  Transaksi Tripay sudah dibuat{methodName ? ` via ${methodName}` : ''}. Lanjutkan pembayaran di halaman Tripay.
+                </div>
               </div>
             </div>
+
+            {checkoutLink ? (
+              <a href={checkoutLink} target="_blank" rel="noreferrer" style={{ textDecoration: 'none', display: 'block' }}>
+                <button style={{ ...btnStyle('#0070F3'), width: '100%' }}>
+                  💳 Lanjutkan Pembayaran di Tripay →
+                </button>
+              </a>
+            ) : (
+              <>
+                {error && <ErrorBox msg={error} />}
+                <button onClick={handleResumePayment} disabled={loading} style={btnStyle('#0070F3')}>
+                  {loading ? '⏳ Memproses...' : '💳 Buat Ulang Pesanan'}
+                </button>
+              </>
+            )}
           </div>
-          <div style={{ fontWeight: 700, color: 'var(--c-dark)', marginBottom: 12, fontSize: 14 }}>Pilih Metode Pembayaran</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
-            {PAYMENT_METHODS.map(m => (
-              <label key={m.code} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, border: `2px solid ${selectedMethod === m.code ? '#0070F3' : '#EAF0F6'}`, cursor: 'pointer', backgroundColor: selectedMethod === m.code ? '#EFF6FF' : 'white' }}>
-                <input type="radio" name="resume_method" value={m.code} checked={selectedMethod === m.code} onChange={() => setMethod(m.code)} style={{ accentColor: '#0070F3' }} />
-                <span style={{ fontSize: 22 }}>{m.icon}</span>
-                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--c-dark)' }}>{m.name}</span>
-              </label>
-            ))}
-          </div>
-          {error && <ErrorBox msg={error} />}
-          <button onClick={handleResumePayment} disabled={loading} style={btnStyle('#0070F3')}>
-            {loading ? '⏳ Memproses...' : '💳 Selesaikan Pembayaran'}
-          </button>
-        </div>
-      )}
+        );
+      })()}
+
 
       {/* ── Konfirmasi Daftar Gratis (Training harga 0) ── */}
       {!loading && step === 'free_direct' && (

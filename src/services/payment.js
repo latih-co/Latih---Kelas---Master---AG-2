@@ -202,6 +202,25 @@ export async function getRegistrationStatus(eventId) {
     .eq('event_id', eventId)
     .maybeSingle();
 
+  if (!data) return null;
+
+  // Jika pending, ambil tripay_reference dari payment terakhir agar bisa redirect ke halaman Tripay
+  if (data.status === 'pending') {
+    const { data: latestPay } = await supabase
+      .from('payments')
+      .select('tripay_reference, payment_method')
+      .eq('registration_id', data.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    return {
+      ...data,
+      tripay_reference:    latestPay?.tripay_reference || null,
+      tripay_payment_method: latestPay?.payment_method || null,
+    };
+  }
+
   return data;
 }
 
