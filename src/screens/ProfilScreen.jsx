@@ -216,7 +216,7 @@ export default function ProfilScreen({ onNavigate }) {
                 <div style={{ fontSize: 28, marginBottom: 8 }}>📭</div>
                 Belum ada registrasi training atau webinar
               </div>
-            ) : registrations.map((reg, idx) => {
+            ) : registrations.filter(reg => reg.events?.title).map((reg, idx, arr) => {
               const STATUS_LABEL = {
                 pending:       { label: 'Menunggu',          color: '#F7A134', bg: '#FEF3C7' },
                 verified:      { label: 'Terverifikasi',     color: '#0070F3', bg: '#EFF6FF' },
@@ -246,7 +246,7 @@ export default function ProfilScreen({ onNavigate }) {
                 : null;
 
               return (
-                <div key={reg.id} style={{ padding: '14px 18px', borderBottom: idx < registrations.length - 1 ? '1px solid #EAF0F6' : 'none' }}>
+                <div key={reg.id} style={{ padding: '14px 18px', borderBottom: idx < arr.length - 1 ? '1px solid #EAF0F6' : 'none' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4, flexWrap: 'wrap' }}>
                     <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--c-teal-dark)', textTransform: 'uppercase' }}>
                       {reg.events?.type?.replace(/_/g, ' ')}
