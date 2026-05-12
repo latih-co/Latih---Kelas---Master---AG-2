@@ -189,19 +189,26 @@ export default function RincianPesananScreen({ paymentRef, onNavigate }) {
 
             {/* Actions */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {payment.status === 'pending' && payment.tripay_reference ? (
+                <a
+                  href={`https://tripay.co.id/checkout/${payment.tripay_reference}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ textDecoration: 'none' }}
+                >
+                  <button style={{ width: '100%', padding: '14px', borderRadius: 14, background: 'linear-gradient(135deg, #0070F3, #0050B3)', color: 'white', border: 'none', fontWeight: 800, fontSize: 14, cursor: 'pointer' }}>
+                    💳 Lanjutkan Pembayaran →
+                  </button>
+                </a>
+              ) : null}
               <button
                 onClick={() => onNavigate?.('profil')}
-                style={{ width: '100%', padding: '14px', borderRadius: 14, background: '#0F172A', color: 'white', border: 'none', fontWeight: 800, fontSize: 14, cursor: 'pointer' }}
+                style={{ width: '100%', padding: '14px', borderRadius: 14, background: payment.status === 'pending' ? 'white' : '#0F172A', color: payment.status === 'pending' ? '#0F172A' : 'white', border: payment.status === 'pending' ? '1px solid #EAF0F6' : 'none', fontWeight: 800, fontSize: 14, cursor: 'pointer' }}
               >
                 📋 Lihat Aktivitas di Profil →
               </button>
-              <button
-                onClick={() => onNavigate?.('beranda')}
-                style={{ width: '100%', padding: '14px', borderRadius: 14, background: 'white', color: '#0F172A', border: '1px solid #EAF0F6', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
-              >
-                ← Kembali ke Beranda
-              </button>
             </div>
+
           </>
         )}
       </div>
