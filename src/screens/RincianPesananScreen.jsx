@@ -75,7 +75,7 @@ export default function RincianPesananScreen({ paymentRef, onNavigate }) {
       {/* ── Header ── */}
       <div style={{ backgroundColor: 'white', borderBottom: '1px solid #EAF0F6', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 12, position: 'sticky', top: 0, zIndex: 10 }}>
         <button
-          onClick={() => onNavigate?.('beranda')}
+          onClick={() => onNavigate?.('profil')}
           style={{ width: 36, height: 36, borderRadius: '50%', border: '1px solid #EAF0F6', background: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}
         >←</button>
         <div>
