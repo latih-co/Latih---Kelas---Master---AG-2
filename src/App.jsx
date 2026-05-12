@@ -39,8 +39,8 @@ export default function App() {
     const urlParams = new URLSearchParams(window.location.search);
     const verifyCode = urlParams.get('verify');
     if (verifyCode) return 'cert_verify';
-    // Detect return dari Tripay (?ref=LTC-xxx)
-    const payRef = urlParams.get('ref');
+    // Detect return dari Tripay — baik via ?ref= (custom) maupun ?tripay_merchant_ref= (Tripay default)
+    const payRef = urlParams.get('ref') || urlParams.get('tripay_merchant_ref');
     if (payRef && payRef.startsWith('LTC-')) return 'pesanan';
     return 'landing';
   });
@@ -52,7 +52,8 @@ export default function App() {
 
   const [paymentRef] = useState(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get('ref') || '';
+    // Support ?ref= (custom) dan ?tripay_merchant_ref= (Tripay default return param)
+    return urlParams.get('ref') || urlParams.get('tripay_merchant_ref') || '';
   });
   
   const [activeTopic, setActiveTopic] = useState(() => {
