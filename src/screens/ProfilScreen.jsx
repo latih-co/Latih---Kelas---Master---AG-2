@@ -398,10 +398,10 @@ export default function ProfilScreen({ onNavigate }) {
                       </div>
                     </div>
                   </div>
-                  {/* Tombol Bayar — hanya untuk status pending dengan checkout URL tersedia */}
+                  {/* Tombol Bayar + Rincian — hanya untuk status pending dengan checkout URL tersedia */}
                   {pay.status === 'pending' && checkoutUrl && (
-                    <div style={{ marginTop: 10 }}>
-                      <a href={checkoutUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
+                    <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
+                      <a href={checkoutUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'none', flex: 1 }}>
                         <button style={{
                           width: '100%', padding: '8px 0', borderRadius: 8,
                           background: 'linear-gradient(135deg, #0070F3, #0050B3)',
@@ -411,8 +411,20 @@ export default function ProfilScreen({ onNavigate }) {
                           💳 Bayar Sekarang →
                         </button>
                       </a>
+                      <button
+                        onClick={() => onNavigate?.('pesanan', pay.tripay_merchant_ref)}
+                        style={{
+                          padding: '8px 14px', borderRadius: 8, flexShrink: 0,
+                          background: 'white', color: '#0F172A',
+                          border: '1px solid #EAF0F6', fontSize: 12, fontWeight: 700,
+                          cursor: 'pointer', whiteSpace: 'nowrap',
+                        }}
+                      >
+                        🧾 Rincian
+                      </button>
                     </div>
                   )}
+
                 </div>
               );
 

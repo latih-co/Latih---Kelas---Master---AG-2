@@ -50,7 +50,7 @@ export default function App() {
     return urlParams.get('verify') || '';
   });
 
-  const [paymentRef] = useState(() => {
+  const [paymentRef, setPaymentRef] = useState(() => {
     const urlParams = new URLSearchParams(window.location.search);
     // Support ?ref= (custom) dan ?tripay_merchant_ref= (Tripay default return param)
     return urlParams.get('ref') || urlParams.get('tripay_merchant_ref') || '';
@@ -187,7 +187,11 @@ export default function App() {
     }
   }, [session]);
 
-  const goPage      = (p) => { setPage(p); setActiveTopic(null); setActiveSubLesson(null); setActiveTraining(null); setActiveRecord(null); setActiveWebinar(null); };
+  const goPage = (p, data) => {
+    if (p === 'pesanan' && data) setPaymentRef(data);  // data = tripay_merchant_ref
+    setPage(p);
+    setActiveTopic(null); setActiveSubLesson(null); setActiveTraining(null); setActiveRecord(null); setActiveWebinar(null);
+  };
   const goRecordDetail = (record) => { setActiveRecord(record); setPage("detail_rekaman"); };
 
   // Guest-aware topic navigation
