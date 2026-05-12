@@ -385,20 +385,50 @@ export default function PaymentModal({ event, onClose, onNavigate, initialPackag
           {isAdmin && <AdminBanner />}
           <div style={{ fontWeight: 700, color: 'var(--c-dark)', marginBottom: 12, fontSize: 14 }}>Pilih Metode Pembayaran</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
-            {PAYMENT_METHODS.map(m => (
-              <button key={m.code} onClick={() => setMethod(m.code)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, border: selectedMethod === m.code ? '2px solid #0070F3' : '1px solid #E2E8F0', background: selectedMethod === m.code ? '#EFF6FF' : 'white', cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s' }}>
-                <span style={{ fontSize: 20 }}>{m.emoji}</span>
-                <span style={{ fontWeight: 700, color: selectedMethod === m.code ? '#1D4ED8' : 'var(--c-dark)', fontSize: 13 }}>{m.label}</span>
-                {selectedMethod === m.code && <span style={{ marginLeft: 'auto', color: '#0070F3', fontSize: 16 }}>✓</span>}
-              </button>
-            ))}
+            {PAYMENT_METHODS.map(m => {
+              const sel = selectedMethod === m.code;
+              return (
+                <button key={m.code} onClick={() => setMethod(m.code)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, border: sel ? '2px solid #0070F3' : '1px solid #E2E8F0', background: sel ? '#EFF6FF' : 'white', cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s' }}>
+                  <span style={{ fontSize: 20 }}>{m.emoji}</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 700, color: sel ? '#1D4ED8' : 'var(--c-dark)', fontSize: 13 }}>{m.label}</div>
+                    {m.desc && <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 1 }}>{m.desc}</div>}
+                    {m.note && (
+                      <div style={{ fontSize: 10, fontWeight: 600, marginTop: 2, color: m.fee === 0 ? '#16A34A' : '#F59E0B' }}>
+                        {m.fee === 0 ? '✓' : '+'} {m.note}
+                      </div>
+                    )}
+                  </div>
+                  {sel && <span style={{ color: '#0070F3', fontSize: 16, flexShrink: 0 }}>✓</span>}
+                </button>
+              );
+            })}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#F8FAFC', borderRadius: 10, padding: '12px 16px', marginBottom: 16 }}>
-            <span style={{ fontSize: 13, color: 'var(--c-muted)' }}>Total Pembayaran</span>
-            <span style={{ fontWeight: 900, color: 'var(--c-dark)', fontSize: 18 }}>
-              {fmtRp(selectedPkg === 'premium' ? event.price_premium : event.price_regular)}
-            </span>
-          </div>
+          {(() => {
+            const basePrice = selectedPkg === 'premium' ? event.price_premium : event.price_regular;
+            const selMethod = PAYMENT_METHODS.find(m => m.code === selectedMethod);
+            const fee = selMethod?.fee || 0;
+            const total = basePrice + fee;
+            return (
+              <div style={{ background: '#F8FAFC', borderRadius: 10, padding: '12px 16px', marginBottom: 16 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: fee > 0 ? 6 : 0 }}>
+                  <span style={{ fontSize: 12, color: 'var(--c-muted)' }}>Harga</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--c-dark)' }}>{fmtRp(basePrice)}</span>
+                </div>
+                {fee > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <span style={{ fontSize: 12, color: '#F59E0B' }}>Biaya admin</span>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: '#F59E0B' }}>+ {fmtRp(fee)}</span>
+                  </div>
+                )}
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: fee > 0 ? '1px solid #EAF0F6' : 'none', paddingTop: fee > 0 ? 8 : 0, marginTop: fee > 0 ? 2 : 0 }}>
+                  <span style={{ fontSize: 13, color: 'var(--c-muted)', fontWeight: 700 }}>Total</span>
+                  <span style={{ fontWeight: 900, color: 'var(--c-dark)', fontSize: 18 }}>{fmtRp(total)}</span>
+                </div>
+              </div>
+            );
+          })()}
+
           {error && <ErrorBox msg={error} />}
           <div style={{ display: 'flex', gap: 10 }}>
             <button onClick={() => setStep('choose_package')} style={{ ...btnStyle('#64748B'), flex: 1 }}>← Kembali</button>

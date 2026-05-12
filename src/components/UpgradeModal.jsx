@@ -99,31 +99,65 @@ export default function UpgradeModal({ registration, onClose, onUpgraded }) {
         {step === 'choose' && (
           <>
             <div style={{ fontSize: 12, fontWeight: 700, color: '#334155', marginBottom: 10 }}>Pilih Metode Pembayaran</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 20 }}>
-              {PAYMENT_METHODS.map(m => (
-                <button
-                  key={m.code}
-                  onClick={() => setMethod(m.code)}
-                  style={{
-                    padding: '10px 12px', borderRadius: 10, fontSize: 12, fontWeight: 700,
-                    display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer',
-                    border: method === m.code ? '2px solid #F59E0B' : '1px solid #E2E8F0',
-                    backgroundColor: method === m.code ? '#FFFBEB' : 'white',
-                    color: method === m.code ? '#B45309' : '#475569',
-                  }}
-                >
-                  <span>{m.emoji}</span> {m.label}
-                </button>
-              ))}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+              {PAYMENT_METHODS.map(m => {
+                const sel = method === m.code;
+                return (
+                  <button
+                    key={m.code}
+                    onClick={() => setMethod(m.code)}
+                    style={{
+                      padding: '10px 14px', borderRadius: 10, fontSize: 12, fontWeight: 700,
+                      display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', textAlign: 'left',
+                      border: sel ? '2px solid #F59E0B' : '1px solid #E2E8F0',
+                      backgroundColor: sel ? '#FFFBEB' : 'white',
+                      color: sel ? '#B45309' : '#475569',
+                    }}
+                  >
+                    <span style={{ fontSize: 18 }}>{m.emoji}</span>
+                    <div style={{ flex: 1 }}>
+                      <div>{m.label}</div>
+                      {m.note && (
+                        <div style={{ fontSize: 10, fontWeight: 600, marginTop: 2, color: m.fee === 0 ? '#16A34A' : '#F59E0B' }}>
+                          {m.fee === 0 ? '✓' : '+'} {m.note}
+                        </div>
+                      )}
+                    </div>
+                    {sel && <span style={{ color: '#F59E0B', fontSize: 14 }}>✓</span>}
+                  </button>
+                );
+              })}
             </div>
+            {(() => {
+              const selM = PAYMENT_METHODS.find(m => m.code === method);
+              const fee  = selM?.fee || 0;
+              const total = pricePremium + fee;
+              return fee > 0 ? (
+                <div style={{ background: '#FFFBEB', borderRadius: 8, padding: '10px 14px', marginBottom: 12, fontSize: 12 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <span style={{ color: '#92400E' }}>Harga Upgrade Premium</span>
+                    <span style={{ fontWeight: 700 }}>{fmt(pricePremium)}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <span style={{ color: '#F59E0B' }}>Biaya admin</span>
+                    <span style={{ fontWeight: 700, color: '#F59E0B' }}>+ {fmt(fee)}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #FDE68A', paddingTop: 6, marginTop: 2 }}>
+                    <span style={{ fontWeight: 800, color: '#92400E' }}>Total</span>
+                    <span style={{ fontWeight: 900, color: '#92400E' }}>Rp {fmt(total)}</span>
+                  </div>
+                </div>
+              ) : null;
+            })()}
             <button onClick={handleUpgrade} disabled={loading} style={btn(loading ? '#94A3B8' : '#F59E0B', 'white')}>
-              {loading ? '⏳ Membuat pembayaran...' : `⬆️ Upgrade & Bayar Rp ${fmt(pricePremium)}`}
+              {loading ? '⏳ Membuat pembayaran...' : `⬆️ Upgrade & Bayar Rp ${fmt(pricePremium + (PAYMENT_METHODS.find(m => m.code === method)?.fee || 0))}`}
             </button>
             <button onClick={onClose} style={{ ...btn('white', '#94A3B8'), border: '1px solid #E2E8F0', marginTop: 8 }}>
               Batal
             </button>
           </>
         )}
+
 
         {/* Step: success (bayar normal) */}
         {step === 'success' && (

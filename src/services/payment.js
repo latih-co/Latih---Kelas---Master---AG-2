@@ -2,15 +2,13 @@ import { supabase } from '../lib/supabase';
 
 // Payment methods tersedia di Tripay (Indonesia)
 export const PAYMENT_METHODS = [
-  { code: 'QRIS',     label: 'QRIS',           emoji: '📱', desc: 'Scan QR — semua e-wallet' },
-  { code: 'BRIVA',    label: 'BRI Virtual Account', emoji: '🏦', desc: '' },
-  { code: 'BNIA',     label: 'BNI Virtual Account', emoji: '🏦', desc: '' },
-  { code: 'MANDIRIVA',label: 'Mandiri Virtual Account', emoji: '🏦', desc: '' },
-  { code: 'BCAVA',    label: 'BCA Virtual Account', emoji: '🏦', desc: '' },
-  { code: 'SHOPEEPAY',label: 'ShopeePay',       emoji: '🛒', desc: '' },
-  { code: 'OVO',      label: 'OVO',              emoji: '💜', desc: '' },
-  { code: 'DANA',     label: 'DANA',             emoji: '💛', desc: '' },
+  { code: 'QRIS',      label: 'QRIS',                    emoji: '📱', desc: 'Scan QR — semua e-wallet & m-banking', fee: 0,    note: 'Tidak ada biaya admin' },
+  { code: 'BRIVA',     label: 'BRI Virtual Account',     emoji: '🏦', desc: 'Transfer ke nomor VA BRI',              fee: 4250, note: 'Biaya admin Rp 4.250' },
+  { code: 'BNIVA',     label: 'BNI Virtual Account',     emoji: '🏦', desc: 'Transfer ke nomor VA BNI',              fee: 4250, note: 'Biaya admin Rp 4.250' },
+  { code: 'MANDIRIVA', label: 'Mandiri Virtual Account', emoji: '🏦', desc: 'Transfer ke nomor VA Mandiri',           fee: 4250, note: 'Biaya admin Rp 4.250' },
+  { code: 'BCAVA',     label: 'BCA Virtual Account',     emoji: '🏦', desc: 'Transfer ke nomor VA BCA',              fee: 4250, note: 'Biaya admin Rp 4.250' },
 ];
+
 
 // ⚠️⚠️⚠️ DEV ONLY — HAPUS SEBELUM LAUNCH ⚠️⚠️⚠️
 // Simulasi pembayaran terbayar tanpa Tripay — hanya untuk testing flow
