@@ -112,34 +112,40 @@ serve(async (req) => {
       ? "https://tripay.co.id/api-sandbox"
       : "https://tripay.co.id/api";
     const APP_URL          = Deno.env.get("APP_URL") || "https://latih.co";
+    const PROXY_SECRET     = Deno.env.get("PROXY_SECRET") || "latih-proxy-2026";
+    const PROXY_URL        = `${APP_URL}/tripay-proxy.php`;
 
     const merchantRef = `LTC-${Date.now()}`;
     const signature   = await createTripaySignature(TRIPAY_MERCHANT, merchantRef, amount, TRIPAY_PRIV_KEY);
     const expiredTime = Math.floor(Date.now() / 1000) + 86400; // 24 jam
 
-    // ── Hit Tripay API ──────────────────────────────────────────
-    const tripayRes = await fetch(`${TRIPAY_BASE}/transaction/create`, {
+    // ── Hit Tripay via PHP Proxy (IP statis Rumahweb) ────────────
+    const tripayRes = await fetch(PROXY_URL, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${TRIPAY_API_KEY}`,
         "Content-Type": "application/json",
+        "X-Proxy-Secret": PROXY_SECRET,
       },
       body: JSON.stringify({
-        method:         payment_method || "QRIS",
-        merchant_ref:   merchantRef,
-        amount:         amount,
-        customer_name:  profile?.name || user.email,
-        customer_email: user.email,
-        customer_phone: "",
-        order_items: [{
-          name:     `${event.title} (${package_type})`,
-          price:    amount,
-          quantity: 1,
-        }],
-        callback_url: `${APP_URL}/tripay-callback.php`,
-        return_url:   `${APP_URL}`,
-        expired_time: expiredTime,
-        signature:    signature,
+        tripay_url: `${TRIPAY_BASE}/transaction/create`,
+        api_key:    TRIPAY_API_KEY,
+        body: {
+          method:         payment_method || "QRIS",
+          merchant_ref:   merchantRef,
+          amount:         amount,
+          customer_name:  profile?.name || user.email,
+          customer_email: user.email,
+          customer_phone: "",
+          order_items: [{
+            name:     `${event.title} (${package_type})`,
+            price:    amount,
+            quantity: 1,
+          }],
+          callback_url: `${APP_URL}/tripay-callback.php`,
+          return_url:   `${APP_URL}`,
+          expired_time: expiredTime,
+          signature:    signature,
+        },
       }),
     });
 
