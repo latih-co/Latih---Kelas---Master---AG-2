@@ -157,18 +157,20 @@ export function UserProvider({ children }) {
     return { error };
   };
 
-  const signUp = async (email, password, name, jobRole) => {
+  const signUp = async (email, password, name, jobRole, whatsapp) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: { data: { name } }, // trigger auto-create profile pakai nama ini
     });
     if (!error && data.user) {
-      // Update job_role & nama — email kolom opsional (mungkin belum ada di DB)
+      // Update job_role, nama, dan whatsapp (opsional)
       try {
+        const updates = { name, job_role: jobRole };
+        if (whatsapp && whatsapp.trim()) updates.whatsapp = whatsapp.trim();
         await supabase
           .from('profiles')
-          .update({ name, job_role: jobRole })
+          .update(updates)
           .eq('id', data.user.id);
       } catch (_) { /* abaikan — profile akan dibuat oleh trigger */ }
     }

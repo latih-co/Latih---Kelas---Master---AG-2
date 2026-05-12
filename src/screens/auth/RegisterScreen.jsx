@@ -13,6 +13,7 @@ export default function RegisterScreen({ onNavigate }) {
   const [step, setStep]         = useState(1);
   const [name, setName]         = useState('');
   const [jobRole, setJobRole]   = useState('');
+  const [whatsapp, setWhatsapp] = useState('');
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm]   = useState('');
@@ -44,7 +45,7 @@ export default function RegisterScreen({ onNavigate }) {
     if (password !== confirm)  { setError('Password dan konfirmasi tidak cocok.'); return; }
     setLoading(true); setError('');
     try {
-      const { error, needsVerification } = await signUp(email, password, name, jobRole);
+      const { error, needsVerification } = await signUp(email, password, name, jobRole, whatsapp);
       setLoading(false);
       if (error) {
         if (error.message.includes('already registered') || error.message.includes('User already registered')) {
@@ -160,11 +161,33 @@ export default function RegisterScreen({ onNavigate }) {
                   </div>
                 </div>
 
-                {error && <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#EF4444' }}>⚠️ {error}</div>}
+                  {/* Nomor WhatsApp — opsional */}
+                  <div>
+                    <label style={labelStyle}>
+                      NOMOR WHATSAPP
+                      <span style={{ fontWeight: 400, color: '#CBD5E1', marginLeft: 6, fontSize: 11 }}>— opsional</span>
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 16, pointerEvents: 'none' }}>📱</span>
+                      <input
+                        type="tel" id="reg-whatsapp" value={whatsapp}
+                        onChange={e => setWhatsapp(e.target.value)}
+                        placeholder="Contoh: 08123456789"
+                        style={{ ...inputStyle, paddingLeft: 42 }}
+                        onFocus={e => e.target.style.borderColor = '#0F172A'}
+                        onBlur={e => e.target.style.borderColor = '#E2E8F0'}
+                      />
+                    </div>
+                    <p style={{ fontSize: 11, color: '#94A3B8', margin: '6px 0 0', lineHeight: 1.5 }}>
+                      Digunakan jika ada hal penting yang perlu disampaikan via WhatsApp
+                    </p>
+                  </div>
 
-                <button type="submit" style={{ width: '100%', padding: '14px', background: '#0F172A', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 800, color: 'white', cursor: 'pointer', marginTop: 4 }}>
-                  Lanjut →
-                </button>
+                  {error && <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#EF4444' }}>⚠️ {error}</div>}
+
+                  <button type="submit" style={{ width: '100%', padding: '14px', background: '#0F172A', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 800, color: 'white', cursor: 'pointer', marginTop: 4 }}>
+                    Lanjut →
+                  </button>
               </form>
             </>
           )}
