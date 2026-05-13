@@ -136,11 +136,24 @@ export default function RegisterScreen({ onNavigate }) {
                   <input
                     type="text" id="reg-name" value={name}
                     onChange={e => setName(e.target.value)}
-                    placeholder="Masukkan nama lengkap"
+                    placeholder="Masukkan nama lengkap sesuai KTP / ijazah"
                     style={inputStyle}
                     onFocus={e => e.target.style.borderColor = '#0F172A'}
                     onBlur={e => e.target.style.borderColor = '#E2E8F0'}
                   />
+                  {/* Notice sertifikat */}
+                  <div style={{
+                    display: 'flex', alignItems: 'flex-start', gap: 8,
+                    background: '#FFFBEB', border: '1px solid #FCD34D',
+                    borderRadius: 10, padding: '10px 12px', marginTop: 8,
+                  }}>
+                    <span style={{ fontSize: 15, flexShrink: 0, lineHeight: 1 }}>🎓</span>
+                    <p style={{ margin: 0, fontSize: 11.5, color: '#92400E', lineHeight: 1.6 }}>
+                      <strong>Nama ini akan tercetak di sertifikat kamu.</strong>{' '}
+                      Pastikan sudah benar sesuai nama resmi (KTP / ijazah), karena{' '}
+                      <strong>tidak bisa diedit</strong> setelah akun dibuat.
+                    </p>
+                  </div>
                 </div>
 
                 <div>
