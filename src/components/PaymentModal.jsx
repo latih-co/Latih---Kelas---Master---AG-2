@@ -253,26 +253,26 @@ export default function PaymentModal({ event, onClose, onNavigate, initialPackag
                 </div>
               </div>
               {/* Pilih metode baru */}
-              <div style={{ fontWeight: 700, color: 'var(--c-dark)', marginBottom: 10, fontSize: 13 }}>Pilih Metode Pembayaran Baru</div>
+              <div style={{ fontWeight: 700, color: 'var(--c-dark)', marginBottom: 10, fontSize: 13 }}>Pilih Metode Pembayaran</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
                 {PAYMENT_METHODS.map(m => {
                   const sel = selectedMethod === m.code;
                   return (
-                    <button key={m.code} onClick={() => setMethod(m.code)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 10, border: sel ? '2px solid #EF4444' : '1px solid #E2E8F0', background: sel ? '#FEF2F2' : 'white', cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s' }}>
+                    <button key={m.code} onClick={() => setMethod(m.code)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 10, border: sel ? '2px solid #0070F3' : '1px solid #E2E8F0', background: sel ? '#EFF6FF' : 'white', cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s' }}>
                       <div style={{ width: 44, height: 28, borderRadius: 5, background: m.brandBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                         <span style={{ color: m.brandText, fontSize: m.brandLabel === 'Mandiri' ? 6 : 10, fontWeight: 900 }}>{m.brandLabel}</span>
                       </div>
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 700, fontSize: 12, color: sel ? '#B91C1C' : 'var(--c-dark)' }}>{m.label}</div>
+                        <div style={{ fontWeight: 700, fontSize: 12, color: sel ? '#1D4ED8' : 'var(--c-dark)' }}>{m.label}</div>
                         {m.note && <div style={{ fontSize: 10, color: m.fee === 0 ? '#16A34A' : '#F59E0B', fontWeight: 600, marginTop: 1 }}>{m.fee === 0 ? '✓' : '+'} {m.note}</div>}
                       </div>
-                      {sel && <span style={{ color: '#EF4444', fontSize: 14 }}>✓</span>}
+                      {sel && <span style={{ color: '#0070F3', fontSize: 14 }}>✓</span>}
                     </button>
                   );
                 })}
               </div>
               {error && <ErrorBox msg={error} />}
-              <button onClick={handleResumePayment} disabled={loading} style={{ ...btnStyle('#EF4444'), width: '100%' }}>
+              <button onClick={handleResumePayment} disabled={loading} style={{ ...btnStyle('#0070F3'), width: '100%' }}>
                 {loading ? '⏳ Memproses...' : '🔄 Buat Pesanan Baru'}
               </button>
             </div>
