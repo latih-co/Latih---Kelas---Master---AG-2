@@ -127,8 +127,7 @@ export default function RegisterScreen({ onNavigate }) {
           {/* ── STEP 1 ── */}
           {step === 1 && (
             <>
-              <h1 style={{ color: '#0F172A', fontSize: 20, fontWeight: 800, margin: '0 0 6px' }}>Perkenalkan diri kamu</h1>
-              <p style={{ color: '#94A3B8', fontSize: 13, margin: '0 0 24px' }}>Agar materi lebih relevan dengan pekerjaanmu</p>
+              <h1 style={{ color: '#0F172A', fontSize: 20, fontWeight: 800, margin: '0 0 24px' }}>Perkenalkan diri kamu</h1>
 
               <form onSubmit={handleStep1} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <div>
