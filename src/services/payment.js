@@ -206,16 +206,22 @@ export async function getRegistrationStatus(eventId) {
   if (data.status === 'pending') {
     const { data: latestPay } = await supabase
       .from('payments')
-      .select('tripay_reference, payment_method')
+      .select('tripay_reference, payment_method, created_at')
       .eq('registration_id', data.id)
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
 
+    // Hitung apakah sudah expired (2 jam = 7200000 ms)
+    const payCreatedAt = latestPay?.created_at ? new Date(latestPay.created_at).getTime() : null;
+    const isExpired = payCreatedAt ? (Date.now() - payCreatedAt > 7200000) : false;
+
     return {
       ...data,
-      tripay_reference:    latestPay?.tripay_reference || null,
+      tripay_reference:      latestPay?.tripay_reference || null,
       tripay_payment_method: latestPay?.payment_method || null,
+      payment_created_at:    latestPay?.created_at || null,
+      is_payment_expired:    isExpired,
     };
   }
 

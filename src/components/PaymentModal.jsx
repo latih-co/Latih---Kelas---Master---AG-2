@@ -224,22 +224,82 @@ export default function PaymentModal({ event, onClose, onNavigate, initialPackag
 
       {/* ── Pembayaran pending — lanjutkan ke Tripay ── */}
       {!loading && step === 'resume_payment' && (() => {
-        const tripayRef    = regStatus?.tripay_reference;
-        const checkoutLink = tripayRef ? `https://tripay.co.id/checkout/${tripayRef}` : null;
-        const rawMethod    = regStatus?.tripay_payment_method || '';
-        const methodName   = PAYMENT_METHODS.find(m => m.code === rawMethod)?.label || rawMethod;
+        const tripayRef      = regStatus?.tripay_reference;
+        const checkoutLink   = tripayRef ? `https://tripay.co.id/checkout/${tripayRef}` : null;
+        const rawMethod      = regStatus?.tripay_payment_method || '';
+        const methodName     = PAYMENT_METHODS.find(m => m.code === rawMethod)?.label || rawMethod;
+        const isExpired      = regStatus?.is_payment_expired === true;
+
+        // Hitung sisa waktu dari created_at
+        const createdAt   = regStatus?.payment_created_at ? new Date(regStatus.payment_created_at).getTime() : null;
+        const expiresAt   = createdAt ? createdAt + 7200000 : null;
+        const msLeft      = expiresAt ? Math.max(0, expiresAt - Date.now()) : null;
+        const minsLeft    = msLeft !== null ? Math.floor(msLeft / 60000) : null;
+        const timeLabel   = msLeft !== null
+          ? minsLeft > 0 ? `${minsLeft} menit lagi` : 'kurang dari 1 menit'
+          : null;
+
+        if (isExpired) {
+          // ── State: Expired ────────────────────────────────────────
+          return (
+            <div>
+              <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 12, padding: 16, marginBottom: 20, display: 'flex', gap: 12 }}>
+                <div style={{ fontSize: 24 }}>⌛</div>
+                <div>
+                  <div style={{ fontWeight: 800, color: '#B91C1C', marginBottom: 4 }}>Waktu Pembayaran Habis</div>
+                  <div style={{ fontSize: 12, color: '#7F1D1D', lineHeight: 1.5 }}>
+                    Transaksi{methodName ? ` via ${methodName}` : ''} sudah kedaluwarsa (batas 2 jam). Silakan pilih metode dan buat pesanan baru.
+                  </div>
+                </div>
+              </div>
+              {/* Pilih metode baru */}
+              <div style={{ fontWeight: 700, color: 'var(--c-dark)', marginBottom: 10, fontSize: 13 }}>Pilih Metode Pembayaran Baru</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+                {PAYMENT_METHODS.map(m => {
+                  const sel = selectedMethod === m.code;
+                  return (
+                    <button key={m.code} onClick={() => setMethod(m.code)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 10, border: sel ? '2px solid #EF4444' : '1px solid #E2E8F0', background: sel ? '#FEF2F2' : 'white', cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s' }}>
+                      <div style={{ width: 44, height: 28, borderRadius: 5, background: m.brandBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <span style={{ color: m.brandText, fontSize: m.brandLabel === 'Mandiri' ? 6 : 10, fontWeight: 900 }}>{m.brandLabel}</span>
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 700, fontSize: 12, color: sel ? '#B91C1C' : 'var(--c-dark)' }}>{m.label}</div>
+                        {m.note && <div style={{ fontSize: 10, color: m.fee === 0 ? '#16A34A' : '#F59E0B', fontWeight: 600, marginTop: 1 }}>{m.fee === 0 ? '✓' : '+'} {m.note}</div>}
+                      </div>
+                      {sel && <span style={{ color: '#EF4444', fontSize: 14 }}>✓</span>}
+                    </button>
+                  );
+                })}
+              </div>
+              {error && <ErrorBox msg={error} />}
+              <button onClick={handleResumePayment} disabled={loading} style={{ ...btnStyle('#EF4444'), width: '100%' }}>
+                {loading ? '⏳ Memproses...' : '🔄 Buat Pesanan Baru'}
+              </button>
+            </div>
+          );
+        }
+
+        // ── State: Pending (belum expired) ────────────────────────
         return (
           <div>
-            <div style={{ background: '#FEF3C7', border: '1px solid #FCD34D', borderRadius: 12, padding: 16, marginBottom: 20, display: 'flex', gap: 12 }}>
+            <div style={{ background: '#FEF3C7', border: '1px solid #FCD34D', borderRadius: 12, padding: 16, marginBottom: 16, display: 'flex', gap: 12 }}>
               <div style={{ fontSize: 24 }}>⏳</div>
               <div>
                 <div style={{ fontWeight: 800, color: '#92400E', marginBottom: 4 }}>Pembayaran Belum Selesai</div>
                 <div style={{ fontSize: 12, color: '#78350F', lineHeight: 1.5 }}>
                   Transaksi sudah dibuat{methodName ? ` via ${methodName}` : ''}.
+                  {timeLabel && (
+                    <span style={{ display: 'block', marginTop: 4, fontWeight: 700 }}>
+                      ⏱ Selesaikan dalam: <span style={{ color: minsLeft !== null && minsLeft < 30 ? '#DC2626' : '#92400E' }}>{timeLabel}</span>
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
-
+            {/* Info batas waktu */}
+            <div style={{ background: '#F8FAFC', borderRadius: 8, padding: '8px 12px', marginBottom: 16, fontSize: 11, color: '#64748B', display: 'flex', alignItems: 'center', gap: 6 }}>
+              ℹ️ Batas waktu pembayaran <strong style={{ color: '#0F172A' }}>2 jam</strong> sejak transaksi dibuat.
+            </div>
             {checkoutLink ? (
               <a href={checkoutLink} target="_blank" rel="noreferrer" style={{ textDecoration: 'none', display: 'block' }}>
                 <button style={{ ...btnStyle('#0070F3'), width: '100%' }}>

@@ -433,18 +433,22 @@ export default function ProfilScreen({ onNavigate }) {
                 Belum ada transaksi pembayaran
               </div>
             ) : payments.map((pay, idx) => {
+              // Deteksi expired secara client-side (2 jam = 7.200.000ms)
+              const payCreatedMs = pay.created_at ? new Date(pay.created_at).getTime() : 0;
+              const isClientExpired = pay.status === 'pending' && payCreatedMs > 0 && (Date.now() - payCreatedMs > 7200000);
+              const effectiveStatus = isClientExpired ? 'expired' : pay.status;
+
               const PAY_STATUS = {
-                pending: { label: 'Menunggu', color: '#F59E0B', bg: '#FEF3C7' },
-                paid:    { label: 'Terdaftar', color: '#10B981', bg: '#D1FAE5' },
-                expired: { label: 'Kedaluwarsa', color: '#6B7280', bg: '#F3F4F6' },
-                failed:  { label: 'Gagal', color: '#EF4444', bg: '#FEE2E2' },
+                pending:  { label: 'Menunggu',     color: '#F59E0B', bg: '#FEF3C7' },
+                paid:     { label: 'Terdaftar',    color: '#10B981', bg: '#D1FAE5' },
+                expired:  { label: 'Kedaluwarsa',  color: '#6B7280', bg: '#F3F4F6' },
+                failed:   { label: 'Gagal',        color: '#EF4444', bg: '#FEE2E2' },
               };
-              const ps = PAY_STATUS[pay.status] || PAY_STATUS.pending;
+              const ps = PAY_STATUS[effectiveStatus] || PAY_STATUS.pending;
               const evTitle = pay.registrations?.events?.title || 'Event';
               const METHOD_SHORT = {
                 QRIS: 'QRIS', BRIVA: 'BRI VA', BNIVA: 'BNI VA',
-                MANDIRIVA: 'Mandiri VA', BCAVA: 'BCA VA', SHOPEEPAY: 'ShopeePay',
-                OVO: 'OVO', DANA: 'DANA', CIMBVA: 'CIMB VA',
+                MANDIRIVA: 'Mandiri VA', BCAVA: 'BCA VA',
               };
               const checkoutUrl = pay.tripay_reference
                 ? `https://tripay.co.id/checkout/${pay.tripay_reference}`
@@ -472,8 +476,9 @@ export default function ProfilScreen({ onNavigate }) {
                       </div>
                     </div>
                   </div>
-                  {/* Tombol Bayar + Rincian — hanya untuk status pending dengan checkout URL tersedia */}
-                  {pay.status === 'pending' && checkoutUrl && (
+
+                  {/* Tombol untuk pending (belum expired) */}
+                  {effectiveStatus === 'pending' && checkoutUrl && (
                     <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
                       <a href={checkoutUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'none', flex: 1 }}>
                         <button style={{
@@ -498,6 +503,14 @@ export default function ProfilScreen({ onNavigate }) {
                       </button>
                     </div>
                   )}
+
+                  {/* Tombol untuk expired — arahkan kembali ke event untuk buat pesanan baru */}
+                  {isClientExpired && (
+                    <div style={{ marginTop: 8, padding: '8px 12px', borderRadius: 8, background: '#F9FAFB', border: '1px solid #E5E7EB', fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                      <span>⌛ Transaksi kedaluwarsa. Daftar ulang untuk membuat pesanan baru.</span>
+                    </div>
+                  )}
+
 
                 </div>
               );
