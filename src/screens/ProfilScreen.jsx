@@ -435,7 +435,7 @@ export default function ProfilScreen({ onNavigate }) {
             ) : payments.map((pay, idx) => {
               // Deteksi expired secara client-side (2 jam = 7.200.000ms)
               const payCreatedMs = pay.created_at ? new Date(pay.created_at).getTime() : 0;
-              const isClientExpired = pay.status === 'pending' && payCreatedMs > 0 && (Date.now() - payCreatedMs > 7200000);
+              const isClientExpired = pay.status === 'pending' && payCreatedMs > 0 && (Date.now() - payCreatedMs > 3600000);
               const effectiveStatus = isClientExpired ? 'expired' : pay.status;
 
               const PAY_STATUS = {

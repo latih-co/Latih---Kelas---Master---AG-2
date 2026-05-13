@@ -232,7 +232,7 @@ export default function PaymentModal({ event, onClose, onNavigate, initialPackag
 
         // Hitung sisa waktu dari created_at
         const createdAt   = regStatus?.payment_created_at ? new Date(regStatus.payment_created_at).getTime() : null;
-        const expiresAt   = createdAt ? createdAt + 7200000 : null;
+        const expiresAt   = createdAt ? createdAt + 3600000 : null;
         const msLeft      = expiresAt ? Math.max(0, expiresAt - Date.now()) : null;
         const minsLeft    = msLeft !== null ? Math.floor(msLeft / 60000) : null;
         const timeLabel   = msLeft !== null
@@ -248,7 +248,7 @@ export default function PaymentModal({ event, onClose, onNavigate, initialPackag
                 <div>
                   <div style={{ fontWeight: 800, color: '#B91C1C', marginBottom: 4 }}>Waktu Pembayaran Habis</div>
                   <div style={{ fontSize: 12, color: '#7F1D1D', lineHeight: 1.5 }}>
-                    Transaksi{methodName ? ` via ${methodName}` : ''} sudah kedaluwarsa (batas 2 jam). Silakan pilih metode dan buat pesanan baru.
+                    Transaksi{methodName ? ` via ${methodName}` : ''} sudah kedaluwarsa (batas 1 jam). Silakan pilih metode dan buat pesanan baru.
                   </div>
                 </div>
               </div>
@@ -298,7 +298,7 @@ export default function PaymentModal({ event, onClose, onNavigate, initialPackag
             </div>
             {/* Info batas waktu */}
             <div style={{ background: '#F8FAFC', borderRadius: 8, padding: '8px 12px', marginBottom: 16, fontSize: 11, color: '#64748B', display: 'flex', alignItems: 'center', gap: 6 }}>
-              ℹ️ Batas waktu pembayaran <strong style={{ color: '#0F172A' }}>2 jam</strong> sejak transaksi dibuat.
+              ℹ️ Batas waktu pembayaran <strong style={{ color: '#0F172A' }}>1 jam</strong> sejak transaksi dibuat.
             </div>
             {checkoutLink ? (
               <a href={checkoutLink} target="_blank" rel="noreferrer" style={{ textDecoration: 'none', display: 'block' }}>

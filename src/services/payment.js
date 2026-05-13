@@ -212,9 +212,9 @@ export async function getRegistrationStatus(eventId) {
       .limit(1)
       .maybeSingle();
 
-    // Hitung apakah sudah expired (2 jam = 7200000 ms)
+    // Hitung apakah sudah expired (1 jam = 3.600.000 ms)
     const payCreatedAt = latestPay?.created_at ? new Date(latestPay.created_at).getTime() : null;
-    const isExpired = payCreatedAt ? (Date.now() - payCreatedAt > 7200000) : false;
+    const isExpired = payCreatedAt ? (Date.now() - payCreatedAt > 3600000) : false;
 
     return {
       ...data,

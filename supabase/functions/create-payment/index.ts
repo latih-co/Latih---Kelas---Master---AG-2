@@ -117,7 +117,7 @@ serve(async (req) => {
 
     const merchantRef = `LTC-${Date.now()}`;
     const signature   = await createTripaySignature(TRIPAY_MERCHANT, merchantRef, amount, TRIPAY_PRIV_KEY);
-    const expiredTime = Math.floor(Date.now() / 1000) + 7200; // 2 jam
+    const expiredTime = Math.floor(Date.now() / 1000) + 3600; // 1 jam
 
     // ── Hit Tripay via PHP Proxy (IP statis Rumahweb) ────────────
     const tripayRes = await fetch(PROXY_URL, {
