@@ -114,7 +114,10 @@ export default function UpgradeModal({ registration, onClose, onUpgraded }) {
                       color: sel ? '#B45309' : '#475569',
                     }}
                   >
-                    <span style={{ fontSize: 18 }}>{m.emoji}</span>
+                    <div style={{ width: 44, height: 28, borderRadius: 5, background: m.brandBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }}>
+                      <span style={{ color: m.brandText, fontSize: m.brandLabel === 'Mandiri' ? 6 : m.brandLabel === 'QRIS' ? 8 : 10, fontWeight: 900, letterSpacing: m.brandLabel === 'QRIS' ? '0.5px' : '-0.3px', lineHeight: 1 }}>{m.brandLabel}</span>
+                    </div>
+
                     <div style={{ flex: 1 }}>
                       <div>{m.label}</div>
                       {m.note && (

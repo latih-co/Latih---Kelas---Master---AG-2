@@ -390,10 +390,12 @@ export default function PaymentModal({ event, onClose, onNavigate, initialPackag
               const sel = selectedMethod === m.code;
               return (
                 <button key={m.code} onClick={() => setMethod(m.code)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, border: sel ? '2px solid #0070F3' : '1px solid #E2E8F0', background: sel ? '#EFF6FF' : 'white', cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s' }}>
-                  <span style={{ fontSize: 20 }}>{m.emoji}</span>
+                  {/* Brand logo badge */}
+                  <div style={{ width: 44, height: 32, borderRadius: 6, background: m.brandBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }}>
+                    <span style={{ color: m.brandText, fontSize: m.brandLabel === 'Mandiri' ? 7 : m.brandLabel === 'QRIS' ? 9 : 11, fontWeight: 900, letterSpacing: m.brandLabel === 'QRIS' ? '0.5px' : '-0.3px', lineHeight: 1 }}>{m.brandLabel}</span>
+                  </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 700, color: sel ? '#1D4ED8' : 'var(--c-dark)', fontSize: 13 }}>{m.label}</div>
-                    {m.desc && <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 1 }}>{m.desc}</div>}
                     {m.note && (
                       <div style={{ fontSize: 10, fontWeight: 600, marginTop: 2, color: m.fee === 0 ? '#16A34A' : '#F59E0B' }}>
                         {m.fee === 0 ? '✓' : '+'} {m.note}
@@ -404,6 +406,7 @@ export default function PaymentModal({ event, onClose, onNavigate, initialPackag
                 </button>
               );
             })}
+
           </div>
           {(() => {
             const basePrice = selectedPkg === 'premium' ? event.price_premium : event.price_regular;

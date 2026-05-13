@@ -2,11 +2,11 @@ import { supabase } from '../lib/supabase';
 
 // Payment methods tersedia di Tripay (Indonesia)
 export const PAYMENT_METHODS = [
-  { code: 'QRIS',      label: 'QRIS',                    emoji: '📱', desc: 'Scan QR — semua e-wallet & m-banking', fee: 0,    note: 'Tidak ada biaya admin' },
-  { code: 'BRIVA',     label: 'BRI Virtual Account',     emoji: '🏦', desc: 'Transfer ke nomor VA BRI',              fee: 4250, note: 'Biaya admin Rp 4.250' },
-  { code: 'BNIVA',     label: 'BNI Virtual Account',     emoji: '🏦', desc: 'Transfer ke nomor VA BNI',              fee: 4250, note: 'Biaya admin Rp 4.250' },
-  { code: 'MANDIRIVA', label: 'Mandiri Virtual Account', emoji: '🏦', desc: 'Transfer ke nomor VA Mandiri',           fee: 4250, note: 'Biaya admin Rp 4.250' },
-  { code: 'BCAVA',     label: 'BCA Virtual Account',     emoji: '🏦', desc: 'Transfer ke nomor VA BCA',              fee: 4250, note: 'Biaya admin Rp 4.250' },
+  { code: 'QRIS',      label: 'QRIS',                    brandBg: '#E31836', brandText: 'white',   brandLabel: 'QRIS',    fee: 0,    note: 'Tidak ada biaya admin' },
+  { code: 'BRIVA',     label: 'BRI Virtual Account',     brandBg: '#003399', brandText: 'white',   brandLabel: 'BRI',     fee: 4250, note: 'Biaya admin Rp 4.250' },
+  { code: 'BNIVA',     label: 'BNI Virtual Account',     brandBg: '#F26522', brandText: 'white',   brandLabel: 'BNI',     fee: 4250, note: 'Biaya admin Rp 4.250' },
+  { code: 'MANDIRIVA', label: 'Mandiri Virtual Account', brandBg: '#003F8A', brandText: '#F7941E', brandLabel: 'Mandiri', fee: 4250, note: 'Biaya admin Rp 4.250' },
+  { code: 'BCAVA',     label: 'BCA Virtual Account',     brandBg: '#0060AF', brandText: 'white',   brandLabel: 'BCA',     fee: 5500, note: 'Biaya admin Rp 5.500' },
 ];
 
 
