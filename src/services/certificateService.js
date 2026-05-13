@@ -231,34 +231,59 @@ export async function generateCertFromTemplate({
     const lh      = ccf.lineHeight || 16;
     const cols    = ccf.columns || 1;
     const colW    = ccf.columnWidth || 320;
+    const maxW    = ccf.maxWidth || colW;
     const maxL    = ccf.maxLines || 12;
     const bullet  = ccf.bullet || '•';
+    const sz      = ccf.size || 10;
     const items   = curriculum.slice(0, maxL);
     const half    = Math.ceil(items.length / 2);
+    const col     = rgb(r, g, b);
 
-    items.forEach((lesson, idx) => {
-      let lx = ccf.x;
-      let ly = ccf.y;
-
-      if (cols === 2) {
-        if (idx >= half) {
-          lx = ccf.x + colW;
-          ly = ccf.y - (idx - half) * lh;
-        } else {
-          ly = ccf.y - idx * lh;
-        }
-      } else {
-        ly = ccf.y - idx * lh;
+    // Word-wrap: hitung baris untuk satu item
+    const wrapItem = (text) => {
+      const prefix  = `${bullet} `;
+      const prefixW = font.widthOfTextAtSize(prefix, sz);
+      const textW   = maxW - prefixW;
+      const words   = text.split(' ');
+      const lines   = [];
+      let cur = '';
+      for (const word of words) {
+        const test = cur ? `${cur} ${word}` : word;
+        if (font.widthOfTextAtSize(test, sz) > textW && cur) {
+          lines.push(cur); cur = word;
+        } else { cur = test; }
       }
+      if (cur) lines.push(cur);
+      return lines;
+    };
 
-      page.drawText(`${bullet} ${lesson}`, {
-        x: lx, y: ly,
-        size: ccf.size || 10,
-        font,
-        color: rgb(r, g, b),
-        maxWidth: colW || 660,
-      });
-    });
+    // Gambar satu item, return jumlah baris dirender
+    const drawItem = (text, startX, startY) => {
+      const prefix  = `${bullet} `;
+      const prefixW = font.widthOfTextAtSize(prefix, sz);
+      const wrapped = wrapItem(text);
+      page.drawText(`${prefix}${wrapped[0]}`, { x: startX, y: startY, size: sz, font, color: col });
+      for (let i = 1; i < wrapped.length; i++) {
+        page.drawText(wrapped[i], { x: startX + prefixW, y: startY - i * lh, size: sz, font, color: col });
+      }
+      return wrapped.length;
+    };
+
+    if (cols === 2) {
+      let leftY = ccf.y;
+      for (const item of items.slice(0, half)) {
+        leftY -= drawItem(item, ccf.x, leftY) * lh;
+      }
+      let rightY = ccf.y;
+      for (const item of items.slice(half)) {
+        rightY -= drawItem(item, ccf.x + colW, rightY) * lh;
+      }
+    } else {
+      let curY = ccf.y;
+      for (const item of items) {
+        curY -= drawItem(item, ccf.x, curY) * lh;
+      }
+    }
   }
 
   return await doc.save();
@@ -344,18 +369,50 @@ async function generateCertProgrammatic({ config, holderName, eventTitle, certNu
   );
 
   // ── Kurikulum 2 kolom ────────────────────────────────────────
-  const items = curriculum?.length ? curriculum : [
+  const progItems = (curriculum?.length ? curriculum : [
     'Materi 1', 'Materi 2', 'Materi 3', 'Materi 4',
     'Materi 5', 'Materi 6', 'Materi 7', 'Materi 8',
-  ];
-  const listY  = height - 292;
-  const lh     = 16;
-  const half   = Math.ceil(items.length / 2);
-  const col2X  = cX + 355;
-  items.slice(0, 12).forEach((item, i) => {
-    const lx = i >= half ? col2X : cX;
-    const ly = listY - (i >= half ? i - half : i) * lh;
-    page.drawText(`\u2022 ${item}`, { x: lx, y: ly, size: 9, font: fReg, color: dark, maxWidth: 330 });
+  ]).slice(0, 12);
+  const listY    = height - 292;
+  const itemLH   = 16;
+  const progSz   = 9;
+  const colMaxW  = 330;
+  const progHalf = Math.ceil(progItems.length / 2);
+  const col2X    = cX + 355;
+
+  const wrapProg = (text) => {
+    const prefix  = '\u2022 ';
+    const prefixW = fReg.widthOfTextAtSize(prefix, progSz);
+    const textW   = colMaxW - prefixW;
+    const words   = text.split(' ');
+    const lines   = [];
+    let cur = '';
+    for (const word of words) {
+      const test = cur ? `${cur} ${word}` : word;
+      if (fReg.widthOfTextAtSize(test, progSz) > textW && cur) {
+        lines.push(cur); cur = word;
+      } else { cur = test; }
+    }
+    if (cur) lines.push(cur);
+    return lines;
+  };
+
+  const drawProg = (text, startX, startY) => {
+    const prefix  = '\u2022 ';
+    const prefixW = fReg.widthOfTextAtSize(prefix, progSz);
+    const wrapped = wrapProg(text);
+    page.drawText(`${prefix}${wrapped[0]}`, { x: startX, y: startY, size: progSz, font: fReg, color: dark });
+    for (let i = 1; i < wrapped.length; i++) {
+      page.drawText(wrapped[i], { x: startX + prefixW, y: startY - i * itemLH, size: progSz, font: fReg, color: dark });
+    }
+    return wrapped.length;
+  };
+
+  let leftY  = listY;
+  let rightY = listY;
+  progItems.forEach((item, i) => {
+    if (i < progHalf) { leftY  -= drawProg(item, cX,    leftY)  * itemLH; }
+    else              { rightY -= drawProg(item, col2X, rightY) * itemLH; }
   });
 
   // ── Bottom: QR + ID Sertifikat + Tanggal ─────────────────────
