@@ -68,12 +68,29 @@ export default function ProfilScreen({ onNavigate }) {
     if (!user) return;
     setDlLoading(cert.cert_number);
     try {
+      const { supabase } = await import('../lib/supabase');
+
+      // Ambil silabus event via registration_id
+      let curriculum;
+      if (cert.registration_id) {
+        const { data: reg } = await supabase
+          .from('registrations')
+          .select('event_id, events(silabus)')
+          .eq('id', cert.registration_id)
+          .maybeSingle();
+        const silabus = reg?.events?.silabus;
+        if (silabus) {
+          curriculum = silabus.split('\n').map(s => s.trim()).filter(Boolean);
+        }
+      }
+
       const pdfBytes = await generateCertPDF({
         holderName: user.name || 'Peserta',
         eventTitle: cert.event_title || cert.type,
         certNumber: cert.cert_number,
         type:       cert.type,
         issuedAt:   cert.issued_at,
+        curriculum,
       });
       downloadCertPDF(pdfBytes, cert.cert_number);
     } catch (err) {
