@@ -271,6 +271,31 @@ export default function PaymentModal({ event, onClose, onNavigate, initialPackag
                   );
                 })}
               </div>
+              {/* Fee breakdown — sama seperti flow normal */}
+              {(() => {
+                const basePrice = selectedPkg === 'premium' ? event.price_premium : event.price_regular;
+                const selMethod = PAYMENT_METHODS.find(m => m.code === selectedMethod);
+                const fee = selMethod?.fee || 0;
+                const total = basePrice + fee;
+                return (
+                  <div style={{ background: '#F8FAFC', borderRadius: 10, padding: '12px 16px', marginBottom: 16 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: fee > 0 ? 6 : 0 }}>
+                      <span style={{ fontSize: 12, color: 'var(--c-muted)' }}>Harga</span>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--c-dark)' }}>{fmtRp(basePrice)}</span>
+                    </div>
+                    {fee > 0 && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                        <span style={{ fontSize: 12, color: '#F59E0B' }}>Biaya admin</span>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: '#F59E0B' }}>+ {fmtRp(fee)}</span>
+                      </div>
+                    )}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: fee > 0 ? '1px solid #EAF0F6' : 'none', paddingTop: fee > 0 ? 8 : 0, marginTop: fee > 0 ? 2 : 0 }}>
+                      <span style={{ fontSize: 13, color: 'var(--c-muted)', fontWeight: 700 }}>Total</span>
+                      <span style={{ fontWeight: 900, color: 'var(--c-dark)', fontSize: 18 }}>{fmtRp(total)}</span>
+                    </div>
+                  </div>
+                );
+              })()}
               {error && <ErrorBox msg={error} />}
               <button onClick={handleResumePayment} disabled={loading} style={{ ...btnStyle('#0070F3'), width: '100%' }}>
                 {loading ? '⏳ Memproses...' : '🔄 Buat Pesanan Baru'}
