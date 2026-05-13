@@ -222,7 +222,7 @@ export default function PaymentModal({ event, onClose, onNavigate, initialPackag
         );
       })()}
 
-      {/* ── Pembayaran pending — lanjutkan ke Tripay ── */}
+      {/* ── Pembayaran pending — lanjutkan ke halaman bayar ── */}
       {!loading && step === 'resume_payment' && (() => {
         const tripayRef      = regStatus?.tripay_reference;
         const checkoutLink   = tripayRef ? `https://tripay.co.id/checkout/${tripayRef}` : null;
@@ -303,7 +303,7 @@ export default function PaymentModal({ event, onClose, onNavigate, initialPackag
             {checkoutLink ? (
               <a href={checkoutLink} target="_blank" rel="noreferrer" style={{ textDecoration: 'none', display: 'block' }}>
                 <button style={{ ...btnStyle('#0070F3'), width: '100%' }}>
-                  💳 Lanjutkan Pembayaran di Tripay →
+                  💳 Lanjutkan Pembayaran →
                 </button>
               </a>
             ) : (
@@ -518,13 +518,13 @@ export default function PaymentModal({ event, onClose, onNavigate, initialPackag
         </div>
       )}
 
-      {/* ── Redirect ke Tripay ── */}
+      {/* ── Redirect ke halaman pembayaran ── */}
       {!loading && step === 'redirect' && (
         <div style={{ textAlign: 'center', padding: '24px 0' }}>
           <div style={{ fontSize: 48, marginBottom: 12 }}>💳</div>
           <div style={{ fontWeight: 900, color: 'var(--c-dark)', fontSize: 18, marginBottom: 8 }}>Halaman Pembayaran Siap!</div>
           <div style={{ fontSize: 13, color: 'var(--c-muted)', marginBottom: 24 }}>
-            Kamu akan diarahkan ke halaman Tripay untuk menyelesaikan pembayaran
+            Kamu akan diarahkan ke halaman pembayaran untuk menyelesaikan transaksi.
           </div>
           <a href={checkoutUrl} target="_blank" rel="noreferrer" style={{ display: 'inline-block', textDecoration: 'none' }}>
             <button style={btnStyle('#0070F3')}>🔗 Buka Halaman Bayar</button>

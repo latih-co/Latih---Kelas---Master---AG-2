@@ -148,7 +148,7 @@ export default function RincianPesananScreen({ paymentRef, onNavigate }) {
                   ['Qty', '1 item'],
                   ['Harga', fmtRp(payment.amount)],
                   ['Metode Bayar', METHOD_LABELS[payment.payment_method] || payment.payment_method],
-                  ['No. Referensi Tripay', payment.tripay_reference || '-'],
+                  ['No. Referensi', payment.tripay_reference || '-'],
                   ['Tanggal Pesanan', fmtDate(payment.created_at)],
                 ].map(([label, val]) => (
                   <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '8px 0', borderTop: '1px solid #F1F5F9', gap: 12 }}>
