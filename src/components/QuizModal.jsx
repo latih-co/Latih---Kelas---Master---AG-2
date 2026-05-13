@@ -103,6 +103,7 @@ export default function QuizModal({ event, registration, onClose, onComplete }) 
             userId:         user.id,
             type:           certType,
             eventTitle:     event.title,
+            holderName:     user?.name || null,
             registrationId: registration.id,
             eventDate:      event.event_date || null,
           });

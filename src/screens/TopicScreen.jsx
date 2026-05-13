@@ -403,6 +403,7 @@ export default function TopicScreen({ topic, onSelectSubLesson, onBack, complete
                   userId:    user.id,
                   type:      'modul',
                   eventTitle: topic.subtitle || topic.title,
+                  holderName: user.name || null,
                   registrationId: null,
                   topicId:   topic.id,
                 });

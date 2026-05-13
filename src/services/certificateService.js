@@ -62,7 +62,7 @@ export function generateCertNumber(type) {
 }
 
 // ── Simpan sertifikat ke Supabase ─────────────────────────────
-export async function issueCertificate({ userId, type, eventTitle, registrationId, quizResultId, eventDate, topicId }) {
+export async function issueCertificate({ userId, type, eventTitle, holderName, registrationId, quizResultId, eventDate, topicId }) {
   // Cek duplikat (jangan terbit dua kali untuk event yang sama)
   const query = supabase.from('certificates').select('id, cert_number, issued_at').eq('user_id', userId).eq('type', type);
   if (registrationId) query.eq('registration_id', registrationId);
@@ -84,6 +84,7 @@ export async function issueCertificate({ userId, type, eventTitle, registrationI
       type,
       cert_number:     certNumber,
       event_title:     eventTitle,
+      holder_name:     holderName || null,
       issued_at:       issuedAt,
       verify_url:      verifyUrl,
       registration_id: registrationId || null,
@@ -485,24 +486,24 @@ export function checkModuleEligibility(topic, completedQuizzes) {
 }
 
 // ── Verifikasi sertifikat berdasarkan cert_number (publik) ─────
-// Menggunakan 2 query terpisah untuk menghindari FK join error (400)
-// saat foreign key certificates.user_id → profiles belum terdefinisi.
 export async function verifyCertificate(certNumber) {
   if (!certNumber?.trim()) return { error: 'Nomor sertifikat tidak boleh kosong.' };
 
-  // Step 1 — ambil data sertifikat
+  // Ambil data sertifikat + holder_name langsung dari tabel certificates
+  // (tidak join ke profiles agar tidak terblokir RLS publik)
   const { data: cert, error: certErr } = await supabase
     .from('certificates')
-    .select('cert_number, type, event_title, issued_at, user_id')
+    .select('cert_number, type, event_title, issued_at, user_id, holder_name')
     .eq('cert_number', certNumber.trim().toUpperCase())
     .maybeSingle();
 
   if (certErr) return { error: 'Terjadi kesalahan saat memverifikasi. Coba lagi.' };
   if (!cert)   return { error: 'Sertifikat tidak ditemukan. Pastikan nomor yang dimasukkan sudah benar.' };
 
-  // Step 2 — ambil nama pemilik dari profiles (by user_id)
-  let holderName = 'Peserta';
-  if (cert.user_id) {
+  // Prioritas: holder_name di certificates → fetch dari profiles → fallback
+  let holderName = cert.holder_name || null;
+
+  if (!holderName && cert.user_id) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('name')
@@ -517,7 +518,7 @@ export async function verifyCertificate(certNumber) {
       type:       cert.type,
       eventTitle: cert.event_title,
       issuedAt:   cert.issued_at,
-      holderName,
+      holderName: holderName || 'Peserta',
     },
   };
 }

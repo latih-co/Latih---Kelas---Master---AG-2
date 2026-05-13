@@ -179,6 +179,7 @@ export default function AdminDashboard({ onNavigate }) {
       userId:         reg.user_id,
       type:           certType,
       eventTitle:     reg.events?.title || 'Event',
+      holderName:     reg.profiles?.name || null,
       registrationId: reg.id,
     });
     // Update status registrasi ke completed
