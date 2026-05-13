@@ -3,6 +3,9 @@ RewriteEngine On
 RewriteCond %{HTTPS} off
 RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
+# Redirect /verify/CODE → /?verify=CODE (QR code sertifikat)
+RewriteRule ^verify/(.+)$ /?verify=$1 [R=301,L]
+
 # SPA fallback — semua request ke index.html
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d

@@ -138,7 +138,7 @@ export async function generateCertFromTemplate({
     ? new Date(issuedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
     : new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
   const verifyText = `latih.co/verify/${certNumber}`;
-  const verifyFull = `https://latih.co/verify/${certNumber}`;
+  const verifyFull = `https://latih.co/?verify=${certNumber}`;
 
   // ── 1. Field teks biasa ─────────────────────────────────────
   const TEXT_DATA = {
@@ -365,7 +365,7 @@ async function generateCertProgrammatic({ config, holderName, eventTitle, certNu
 
   try {
     const QRCode   = (await import('qrcode')).default;
-    const qrUrl    = await QRCode.toDataURL(`https://latih.co/verify/${certNumber}`, { width: 256, margin: 1 });
+    const qrUrl    = await QRCode.toDataURL(`https://latih.co/?verify=${certNumber}`, { width: 256, margin: 1 });
     const qrBase64 = qrUrl.replace('data:image/png;base64,', '');
     const qrPng    = Uint8Array.from(atob(qrBase64), c => c.charCodeAt(0));
     const qrImg    = await doc.embedPng(qrPng);
