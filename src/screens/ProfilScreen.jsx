@@ -464,7 +464,9 @@ export default function ProfilScreen({ onNavigate }) {
                         {pay.tripay_merchant_ref} · {METHOD_SHORT[pay.payment_method] || pay.payment_method}
                       </div>
                       <div style={{ fontSize: 10, color: 'var(--c-muted)' }}>
-                        {new Date(pay.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        {new Date(pay.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Jakarta' })}
+                        {', '}
+                        {new Date(pay.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' })} WIB
                       </div>
                     </div>
                     <div style={{ textAlign: 'right', flexShrink: 0 }}>
