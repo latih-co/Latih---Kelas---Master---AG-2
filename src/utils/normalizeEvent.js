@@ -55,11 +55,15 @@ export function normalizeEvent(event) {
     },
 
     // ── pricing ──────────────────────────────────
-    price:         isReguler ? 'Gratis' : `Rp${((event.price_regular || 0) / 1000).toFixed(0)}k`,
-    priceNum:      event.price_regular  || 0,
-    priceFree:     'Rp 0',
-    pricePremium:  formatPrice(event.price_premium),
-    pricePremiumNum: event.price_premium || 0,
+    price:           isReguler ? 'Gratis' : `Rp${((event.price_regular || 0) / 1000).toFixed(0)}k`,
+    priceNum:        event.price_regular  || 0,
+    priceFree:       'Rp 0',
+    pricePremium:    formatPrice(event.price_premium),
+    pricePremiumNum: event.price_premium  || 0,
+
+    // Passthrough langsung agar semua screen bisa akses tanpa alias
+    price_regular:   event.price_regular  ?? 0,
+    price_premium:   event.price_premium  ?? 0,
 
     // ── webinar category ─────────────────────────
     kategori: isReguler ? 'reguler' : (isAdvanced ? 'advanced' : null),
