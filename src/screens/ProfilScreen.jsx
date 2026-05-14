@@ -328,10 +328,11 @@ export default function ProfilScreen({ onNavigate }) {
                 ['verified','paid','attended','quiz_unlocked'].includes(reg.status);
               const isWebAdvPremium = reg.events?.type === 'webinar_advanced' && reg.package === 'premium';
               const isWebAdvFree    = reg.events?.type === 'webinar_advanced' && reg.package === 'free';
+              // showExtra: free tidak dapat materi; webinar_advanced premium hanya setelah completed
               const showExtra = reg.events?.extra_link &&
-                !isWebAdvFree && // paket free tidak pernah dapat materi
+                !isWebAdvFree &&
                 (isWebAdvPremium
-                  ? reg.status === 'completed'  // webinar advanced premium: hanya setelah kuis selesai
+                  ? reg.status === 'completed'
                   : ['verified','paid','attended','quiz_unlocked','completed'].includes(reg.status));
               const isWebAdv = reg.events?.type === 'webinar_advanced';
               const pkg = reg.package; // 'free' | 'premium' | undefined
