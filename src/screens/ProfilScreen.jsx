@@ -327,7 +327,8 @@ export default function ProfilScreen({ onNavigate }) {
               const showZoom = reg.events?.zoom_link &&
                 ['verified','paid','attended','quiz_unlocked'].includes(reg.status);
               const showExtra = reg.events?.extra_link &&
-                ['verified','paid','attended','quiz_unlocked','completed'].includes(reg.status);
+                ['verified','paid','attended','quiz_unlocked','completed'].includes(reg.status) &&
+                !(reg.events?.type === 'webinar_advanced' && reg.package === 'free');
               const isWebAdv = reg.events?.type === 'webinar_advanced';
               const pkg = reg.package; // 'free' | 'premium' | undefined
               const packageBadge = isWebAdv && pkg

@@ -387,8 +387,9 @@ export default function QuizModal({ event, registration, onClose, onComplete }) 
                     ⚠️ {downloadErr}
                   </div>
                 )}
-                {/* Fasilitas Tambahan — tampil jika event punya extra_link */}
-                {event?.extra_link && (
+                {/* Fasilitas Tambahan — disembunyikan untuk webinar_advanced paket free */}
+                {event?.extra_link &&
+                  !(event?.type === 'webinar_advanced' && registration?.package === 'free') && (
                   <a
                     href={event.extra_link}
                     target="_blank"
