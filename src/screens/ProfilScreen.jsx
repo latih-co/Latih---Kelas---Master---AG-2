@@ -5,6 +5,8 @@ import { supabase } from '../lib/supabase';
 import QuizModal from '../components/QuizModal';
 import UpgradeModal from '../components/UpgradeModal';
 import { generateCertPDF, downloadCertPDF, CERT_TYPES } from '../services/certificateService';
+import { submitNameChangeRequest, getMyNameChangeRequest } from '../services/nameChangeService';
+import NameChangeModal from '../components/NameChangeModal';
 
 export default function ProfilScreen({ onNavigate }) {
   const isMobile = useIsMobile();
@@ -21,10 +23,16 @@ export default function ProfilScreen({ onNavigate }) {
   const [editWa, setEditWa]                 = useState(false);
   const [waInput, setWaInput]               = useState('');
   const [waSaving, setWaSaving]             = useState(false);
+  const [nameRequest, setNameRequest]       = useState(null);  // request koreksi nama terakhir
+  const [showNameModal, setShowNameModal]   = useState(false);
+  const [nameReqLoading, setNameReqLoading] = useState(false);
 
   const loadData = useCallback(async () => {
     if (!user) return;
     try {
+      // Load name change request
+      const { data: ncr } = await getMyNameChangeRequest();
+      setNameRequest(ncr || null);
       const { data: certs } = await supabase
         .from('certificates')
         .select('*')
@@ -231,6 +239,42 @@ export default function ProfilScreen({ onNavigate }) {
             📇 Info Kontak
           </div>
           <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {/* Nama — locked, dengan status request */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+              <span style={{ fontSize: 18, marginTop: 2 }}>👤</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--c-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>Nama (Sertifikat)</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 13, color: 'var(--c-dark)', fontWeight: 700 }}>🔒 {user.name}</span>
+                  {/* Status badge */}
+                  {nameRequest?.status === 'pending' && (
+                    <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 99, background: '#FEF3C7', color: '#B45309' }}>⏳ Menunggu Review</span>
+                  )}
+                  {nameRequest?.status === 'approved' && (
+                    <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 99, background: '#D1FAE5', color: '#065F46' }}>✅ Koreksi Disetujui</span>
+                  )}
+                  {nameRequest?.status === 'rejected' && (
+                    <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 99, background: '#FEE2E2', color: '#991B1B' }}>❌ Ditolak</span>
+                  )}
+                </div>
+                {/* Catatan admin jika ditolak */}
+                {nameRequest?.status === 'rejected' && nameRequest?.admin_note && (
+                  <div style={{ marginTop: 4, fontSize: 11, color: '#B45309', background: '#FEF3C7', borderRadius: 6, padding: '4px 8px', lineHeight: 1.5 }}>
+                    Catatan admin: {nameRequest.admin_note}
+                  </div>
+                )}
+                {/* Tombol ajukan — hanya jika tidak ada pending */}
+                {(!nameRequest || nameRequest.status === 'rejected') && (
+                  <button
+                    onClick={() => setShowNameModal(true)}
+                    style={{ marginTop: 6, padding: '4px 10px', borderRadius: 6, background: '#F8FAFC', color: '#64748B', border: '1px solid #EAF0F6', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
+                  >
+                    ✏️ Ajukan Koreksi Nama
+                  </button>
+                )}
+              </div>
+            </div>
+
             {/* Email — read only */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <span style={{ fontSize: 18 }}>✉️</span>
@@ -666,6 +710,24 @@ export default function ProfilScreen({ onNavigate }) {
           registration={upgradeTarget}
           onClose={() => setUpgradeTarget(null)}
           onUpgraded={() => loadData()}
+        />
+      )}
+
+      {/* ── NameChangeModal ── */}
+      {showNameModal && (
+        <NameChangeModal
+          currentName={user.name}
+          loading={nameReqLoading}
+          onClose={() => setShowNameModal(false)}
+          onSubmit={async (newName, reason) => {
+            setNameReqLoading(true);
+            const { error } = await submitNameChangeRequest(user.name, newName, reason);
+            setNameReqLoading(false);
+            if (!error) {
+              setShowNameModal(false);
+              await loadData(); // refresh status request
+            }
+          }}
         />
       )}
     </div>

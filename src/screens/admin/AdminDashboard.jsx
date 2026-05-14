@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase';
 import { useUser } from '../../context/UserContext';
 import { useIsMobile } from '../../utils/mobile';
 import { issueCertificate } from '../../services/certificateService';
+import { getAllNameChangeRequests, approveNameChange, rejectNameChange } from '../../services/nameChangeService';
 import LogoWarna from '../../assets/Logo Latih Warna.png';
 
 // ─── Sub-components ────────────────────────────────────────────
@@ -30,6 +31,10 @@ export default function AdminDashboard({ onNavigate }) {
   const [pendingIG, setPendingIG] = useState([]);
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState({}); // { [regId]: true }
+  const [nameReqs, setNameReqs]   = useState([]);
+  const [rejectTarget, setRejectTarget] = useState(null); // { id, userId, oldName, newName }
+  const [rejectNote, setRejectNote]     = useState('');
+  const [nameActioning, setNameActioning] = useState('');
 
   // ── Filter state ───────────────────────────────────────────
   const [filterRegType,   setFilterRegType]   = useState('all');
@@ -120,6 +125,10 @@ export default function AdminDashboard({ onNavigate }) {
         return { ...profile, regs: userRegs, totalSpend, channels, completedCount };
       }).sort((a, b) => b.totalSpend - a.totalSpend || b.regs.length - a.regs.length);
       setUserStats(userStatsData);
+
+      // ── Name change requests ──
+      const { data: ncrData } = await getAllNameChangeRequests();
+      setNameReqs(ncrData || []);
     } catch (err) {
       console.error('[Admin] loadAll error:', err);
     } finally {
@@ -260,6 +269,7 @@ export default function AdminDashboard({ onNavigate }) {
     { id: 'registrations', label: '📋 Registrasi' },
     { id: 'users',         label: '👥 Data User' },
     { id: 'verify_ig',     label: `⚡ Verifikasi IG${pendingIG.length > 0 ? ` (${pendingIG.length})` : ''}` },
+    { id: 'name_changes',  label: `✏️ Koreksi Nama${nameReqs.filter(r => r.status === 'pending').length > 0 ? ` (${nameReqs.filter(r => r.status === 'pending').length})` : ''}` },
   ];
 
   const STATUS_COLORS = {
@@ -877,6 +887,113 @@ export default function AdminDashboard({ onNavigate }) {
           </div>
         </div>
       )}
+
+      {/* ── TAB: Koreksi Nama ── */}
+      {!loading && tab === 'name_changes' && (
+        <div style={{ padding: isMobile ? '16px' : '24px 32px' }}>
+          <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--c-dark)', margin: '0 0 16px' }}>✏️ Permintaan Koreksi Nama</h2>
+
+          {nameReqs.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '48px 24px', background: 'white', borderRadius: 16, border: '1px solid #EAF0F6', color: 'var(--c-muted)', fontSize: 14 }}>
+              <div style={{ fontSize: 32, marginBottom: 12 }}>📭</div>
+              Belum ada permintaan koreksi nama.
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {nameReqs.map(req => {
+                const statusCfg = {
+                  pending:  { bg: '#FEF3C7', color: '#B45309', label: '⏳ Menunggu' },
+                  approved: { bg: '#D1FAE5', color: '#065F46', label: '✅ Disetujui' },
+                  rejected: { bg: '#FEE2E2', color: '#991B1B', label: '❌ Ditolak' },
+                }[req.status] || { bg: '#F1F5F9', color: '#64748B', label: req.status };
+
+                return (
+                  <div key={req.id} style={{ background: 'white', borderRadius: 14, border: '1px solid #EAF0F6', padding: '16px 18px', boxShadow: '0 1px 4px rgba(0,0,0,0.03)' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--c-muted)', marginBottom: 6 }}>
+                          👤 {req.profiles?.name || '-'} &nbsp;·&nbsp; {req.profiles?.email || '-'}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 8 }}>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: '#64748B', textDecoration: 'line-through' }}>{req.old_name}</span>
+                          <span style={{ fontSize: 14, color: '#94A3B8' }}>→</span>
+                          <span style={{ fontSize: 14, fontWeight: 800, color: '#0F172A' }}>{req.new_name}</span>
+                        </div>
+                        <div style={{ fontSize: 12, color: '#475569', background: '#F8FAFC', borderRadius: 8, padding: '6px 10px', marginBottom: 6, lineHeight: 1.5 }}>
+                          💬 {req.reason}
+                        </div>
+                        {req.admin_note && (
+                          <div style={{ fontSize: 11, color: '#B45309', background: '#FEF3C7', borderRadius: 6, padding: '4px 8px' }}>
+                            Catatan admin: {req.admin_note}
+                          </div>
+                        )}
+                        <div style={{ fontSize: 10, color: 'var(--c-muted)', marginTop: 4 }}>
+                          {new Date(req.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                        </div>
+                      </div>
+                      <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 99, backgroundColor: statusCfg.bg, color: statusCfg.color, flexShrink: 0 }}>
+                        {statusCfg.label}
+                      </span>
+                    </div>
+
+                    {req.status === 'pending' && (
+                      <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        <button
+                          disabled={nameActioning === req.id}
+                          onClick={async () => {
+                            setNameActioning(req.id);
+                            await approveNameChange(req.id, req.user_id, req.new_name);
+                            setNameActioning('');
+                            await loadAll();
+                          }}
+                          style={{ padding: '8px 18px', borderRadius: 8, background: '#059669', color: 'white', border: 'none', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
+                        >
+                          {nameActioning === req.id ? '⏳...' : '✅ Approve'}
+                        </button>
+                        <button
+                          onClick={() => { setRejectTarget(req); setRejectNote(''); }}
+                          style={{ padding: '8px 18px', borderRadius: 8, background: '#FEF2F2', color: '#B91C1C', border: '1px solid #FECACA', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                        >
+                          ❌ Tolak
+                        </button>
+                      </div>
+                    )}
+
+                    {rejectTarget?.id === req.id && (
+                      <div style={{ marginTop: 12, padding: '12px', background: '#FFF1F2', border: '1px solid #FECDD3', borderRadius: 10 }}>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: '#B91C1C', marginBottom: 8 }}>Catatan penolakan (opsional)</div>
+                        <input
+                          type="text" value={rejectNote}
+                          onChange={e => setRejectNote(e.target.value)}
+                          placeholder="Mis: Nama tidak sesuai identitas resmi"
+                          style={{ width: '100%', boxSizing: 'border-box', padding: '8px 12px', borderRadius: 8, border: '1px solid #FECACA', fontSize: 12, outline: 'none', marginBottom: 8 }}
+                        />
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button
+                            disabled={nameActioning === req.id}
+                            onClick={async () => {
+                              setNameActioning(req.id);
+                              await rejectNameChange(req.id, rejectNote);
+                              setNameActioning('');
+                              setRejectTarget(null);
+                              await loadAll();
+                            }}
+                            style={{ padding: '7px 16px', borderRadius: 8, background: '#B91C1C', color: 'white', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                          >
+                            {nameActioning === req.id ? '⏳...' : 'Konfirmasi Tolak'}
+                          </button>
+                          <button onClick={() => setRejectTarget(null)} style={{ padding: '7px 14px', borderRadius: 8, background: 'white', color: '#64748B', border: '1px solid #E2E8F0', fontSize: 12, cursor: 'pointer' }}>Batal</button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
     </div>
   );
 }
