@@ -537,10 +537,49 @@ export default function LandingScreen({ onNavigate, onTrainingDetail, onWebinarD
                   <span style={{ cursor: 'pointer' }} onClick={() => onNavigate('contact')}>Kontak</span>
                   <span style={{ cursor: 'pointer' }} onClick={() => onNavigate('terms')}>Syarat & Ketentuan</span>
                   <span style={{ cursor: 'pointer' }} onClick={() => onNavigate('privacy')}>Kebijakan Privasi</span>
+                  <span
+                    style={{
+                      cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6,
+                      color: '#6EE7B7', fontWeight: 700,
+                    }}
+                    onClick={() => onNavigate('cert_verify')}
+                  >
+                    🛡️ Verifikasi Sertifikat
+                  </span>
                 </div>
               </div>
             </div>
           </div>
+
+          {/* Verifikasi Sertifikat banner — untuk HRD & rekruter */}
+          <div
+            onClick={() => onNavigate('cert_verify')}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              gap: 16, flexWrap: 'wrap',
+              background: 'rgba(110,231,183,0.08)',
+              border: '1px solid rgba(110,231,183,0.2)',
+              borderRadius: 14, padding: '14px 20px',
+              marginBottom: 24, cursor: 'pointer',
+              transition: 'background 0.2s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(110,231,183,0.14)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(110,231,183,0.08)'}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ fontSize: 20 }}>🛡️</span>
+              <div>
+                <div style={{ color: '#6EE7B7', fontWeight: 800, fontSize: 13 }}>Verifikasi Keaslian Sertifikat</div>
+                <div style={{ color: '#9CA3AF', fontSize: 12, marginTop: 2 }}>
+                  HRD &amp; Rekruter: cek keaslian sertifikat latih.co tanpa perlu login
+                </div>
+              </div>
+            </div>
+            <span style={{ color: '#6EE7B7', fontWeight: 800, fontSize: 13, whiteSpace: 'nowrap' }}>
+              Verifikasi Sekarang →
+            </span>
+          </div>
+
           <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', gap: 12, fontSize: 13 }}>
             <div>© {new Date().getFullYear()} Latih. Hak cipta dilindungi undang-undang.</div>
             <div style={{ color: '#6B7280' }}>Bukan merupakan anggota badan akreditasi resmi.</div>
