@@ -231,12 +231,13 @@ export default function App() {
 
   const goBack      = ()  => { setPage("topic"); setActiveSubLesson(null); };
   const goTrainingDetail = (training) => { 
-    const normalized = ('price_regular' in training) ? normalizeEvent(training) : training;
+    // 'image_url' hanya ada di raw Supabase; normalized sudah diubah menjadi 'image'
+    const normalized = ('image_url' in training) ? normalizeEvent(training) : training;
     setActiveTraining(normalized); 
     setPage("detail_training"); 
   };
   const goWebinarDetail  = (webinar)  => { 
-    const normalized = ('price_regular' in webinar) ? normalizeEvent(webinar) : webinar;
+    const normalized = ('image_url' in webinar) ? normalizeEvent(webinar) : webinar;
     setActiveWebinar(normalized);  
     setPage("detail_webinar"); 
   };
