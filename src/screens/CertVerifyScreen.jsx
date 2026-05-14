@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { verifyCertificate, CERT_TYPES } from '../services/certificateService';
+import { useIsMobile } from '../utils/mobile';
 
 /**
  * CertVerifyScreen
@@ -10,6 +11,7 @@ import { verifyCertificate, CERT_TYPES } from '../services/certificateService';
  *   onNavigate   — (page) => void
  */
 export default function CertVerifyScreen({ initialCode = '', onNavigate }) {
+  const isMobile = useIsMobile();
   const [code, setCode]     = useState(initialCode || '');
   const [status, setStatus] = useState('idle'); // idle | loading | success | error
   const [result, setResult] = useState(null);
@@ -67,7 +69,7 @@ export default function CertVerifyScreen({ initialCode = '', onNavigate }) {
         <label style={{ fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 8, display: 'block' }}>
           Nomor Sertifikat
         </label>
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 10 }}>
           <input
             type="text"
             value={code}
@@ -94,11 +96,12 @@ export default function CertVerifyScreen({ initialCode = '', onNavigate }) {
               color: 'white', border: 'none', borderRadius: 12,
               fontSize: 14, fontWeight: 800, cursor: status === 'loading' ? 'wait' : 'pointer',
               whiteSpace: 'nowrap',
+              width: isMobile ? '100%' : 'auto',
               boxShadow: status === 'loading' ? 'none' : '0 4px 14px rgba(0,112,243,0.3)',
               transition: 'all 0.15s',
             }}
           >
-            {status === 'loading' ? '⏳' : 'Verifikasi →'}
+            {status === 'loading' ? '⏳ Memverifikasi...' : 'Verifikasi →'}
           </button>
         </div>
       </div>
