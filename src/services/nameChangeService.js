@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { supabase } from '../lib/supabase';
 
 // ── User: submit permintaan koreksi nama ─────────────────────────
 export const submitNameChangeRequest = async (oldName, newName, reason) => {
