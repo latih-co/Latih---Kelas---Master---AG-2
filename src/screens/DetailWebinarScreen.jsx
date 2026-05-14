@@ -32,12 +32,10 @@ const REGULER_SERTIFIKAT_STEPS = [
 ];
 
 // ─── Shared QnA items ─────────────────────────────────────────────────
-const makeQna = (webinar) => [
+const makeQna = (webinar) => webinar.kategori === 'reguler' ? [
   {
     q: "Apakah ada rekaman jika saya tidak bisa hadir?",
-    a: webinar.kategori === "reguler"
-      ? "Rekaman tidak tersedia untuk Webinar Reguler. Hadir langsung adalah syarat mendapatkan sertifikat."
-      : "Ya, rekaman tersedia untuk peserta Paket Premium dalam 1x24 jam setelah webinar selesai.",
+    a: "Rekaman tidak tersedia untuk Webinar Reguler. Hadir langsung adalah syarat mendapatkan sertifikat.",
   },
   {
     q: "Bagaimana cara bergabung ke sesi Zoom?",
@@ -45,11 +43,23 @@ const makeQna = (webinar) => [
   },
   {
     q: "Apakah sertifikat akan dikirim otomatis?",
-    a: webinar.kategori === "reguler"
-      ? "Sertifikat dikirim ke email setelah kamu memenuhi semua 6 tahapan yang disyaratkan. Konfirmasikan melalui WhatsApp Admin."
-      : "Sertifikat digital dikirimkan ke email terdaftar dalam 1x24 jam setelah webinar selesai (khusus Paket Premium).",
+    a: "Sertifikat dikirim ke email setelah kamu memenuhi semua 6 tahapan yang disyaratkan. Konfirmasikan melalui WhatsApp Admin.",
+  },
+] : [
+  {
+    q: "Saya mendaftar dengan paket Free, apakah setelah Kelas selesai boleh mengubah menjadi Paket Premium?",
+    a: "Ya, bisa. Silakan proses di halaman Profil Saya.",
+  },
+  {
+    q: "Apakah sertifikat bisa menjadi dokumen pendukung melamar pekerjaan?",
+    a: "Ya, bisa. Sertifikat yang diterbitkan Latih bisa menjadi dokumen pendukung melamar pekerjaan, dengan catatan, kamu sudah memahami semua materi yang disampaikan, agar saat interview kamu bisa menjelaskan dengan baik dan benar.",
+  },
+  {
+    q: "Apakah bisa saya mendapatkan sertifikat tanpa menghadiri Kelas secara live pada waktunya?",
+    a: "Tidak bisa. Kamu wajib hadir saat live Zoom untuk mendapatkan sertifikat.",
   },
 ];
+
 
 // ─── Format harga ───────────────────────────────────────────────────────
 const fmtRp = (val) => {
