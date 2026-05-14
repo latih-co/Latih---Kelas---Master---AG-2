@@ -200,17 +200,6 @@ export default function CertVerifyScreen({ initialCode = '', onNavigate }) {
         </div>
       )}
 
-      {/* Back link */}
-      <button
-        onClick={() => onNavigate?.('landing')}
-        style={{
-          marginTop: 32, background: 'none', border: 'none',
-          fontSize: 13, fontWeight: 700, color: '#64748B',
-          cursor: 'pointer', textDecoration: 'underline',
-        }}
-      >
-        ← Kembali ke latih.co
-      </button>
     </div>
   );
 }
