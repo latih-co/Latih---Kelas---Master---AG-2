@@ -169,8 +169,16 @@ export default function KelasSertifikasiScreen({ onSelectTraining }) {
                   borderRadius: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
                   transition: 'all 0.15s', cursor: 'pointer', overflow: 'hidden',
                 }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--c-teal)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,112,243,0.1)'; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = item.isFeatured ? 'var(--c-teal)' : '#EAF0F6'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.02)'; }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.borderColor = 'var(--c-teal)';
+                  e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,112,243,0.15)';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.borderColor = item.isFeatured ? 'var(--c-teal)' : '#EAF0F6';
+                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.02)';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
               >
                 {/* Cover image */}
                 {item.image ? (
