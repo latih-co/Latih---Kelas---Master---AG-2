@@ -181,40 +181,45 @@ export default function ProfilScreen({ onNavigate }) {
         </div>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      {/* ── Container Utama Profil ── */}
+      <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 24, alignItems: 'flex-start' }}>
 
-        <div style={{ backgroundColor: 'white', borderRadius: 22, overflow: 'hidden', border: '1px solid #EAF0F6', boxShadow: '0 2px 8px rgba(0,0,0,0.02)', display: 'flex', flexDirection: isMobile ? 'column' : 'row' }}>
+        {/* ── KIRI: Sidebar Profil & Kontak ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24, width: isMobile ? '100%' : '35%', flexShrink: 0 }}>
 
-          <div style={{ backgroundColor: 'var(--c-dark)', padding: '24px 32px', display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: 'center', gap: 24, flex: 1 }}>
-            <div style={{ width: 80, height: 80, borderRadius: '50%', backgroundColor: 'var(--c-teal)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '4px solid rgba(255,255,255,0.15)', color: 'var(--c-dark)', fontSize: 28, fontWeight: 900 }}>
-              {initials}
-            </div>
+          {/* 1. Header Profil (Card Gelap) */}
+          <div style={{ backgroundColor: 'white', borderRadius: 22, overflow: 'hidden', border: '1px solid #EAF0F6', boxShadow: '0 2px 8px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column' }}>
 
-            <div style={{ textAlign: isMobile ? 'center' : 'left', flex: 1 }}>
-              <h2 style={{ fontSize: 22, fontWeight: 800, color: 'white', margin: '0 0 4px 0' }}>{user.name}</h2>
-              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}>
-                {user.job_role || 'Profesional Industri'}
+            <div style={{ backgroundColor: 'var(--c-dark)', padding: '32px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, textAlign: 'center' }}>
+              <div style={{ width: 80, height: 80, borderRadius: '50%', backgroundColor: 'var(--c-teal)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '4px solid rgba(255,255,255,0.15)', color: 'var(--c-dark)', fontSize: 28, fontWeight: 900 }}>
+                {initials}
               </div>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginBottom: isMobile ? 20 : 0 }}>
-                {user.role === 'admin' ? '⚙️ Administrator' : ''}
-              </div>
-            </div>
 
-            <div style={{ display: 'flex', gap: 12, width: isMobile ? '100%' : 'auto', justifyContent: isMobile ? 'center' : 'flex-start' }}>
-              {[
-                { label: 'STREAK',     val: `${streak}🔥` },
-                { label: 'XP',         val: xp },
-                { label: 'SERTIFIKAT', val: certCount },
-              ].map(stat => (
-                <div key={stat.label} style={{ minWidth: 80, backgroundColor: 'rgba(255,255,255,0.07)', borderRadius: 12, padding: 12, textAlign: 'center' }}>
-                  <div className="font-mono" style={{ fontSize: 18, fontWeight: 800, color: 'white', marginBottom: 4 }}>{stat.val}</div>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.05em' }}>{stat.label}</div>
+              <div>
+                <h2 style={{ fontSize: 20, fontWeight: 800, color: 'white', margin: '0 0 4px 0' }}>{user.name}</h2>
+                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}>
+                  {user.job_role || 'Profesional Industri'}
                 </div>
-              ))}
-            </div>
-          </div>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>
+                  {user.role === 'admin' ? '⚙️ Administrator' : ''}
+                </div>
+              </div>
 
-          <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', justifyContent: 'center', width: isMobile ? 'auto' : 280, borderLeft: isMobile ? 'none' : '1px solid #EAF0F6', backgroundColor: '#FAFAFB' }}>
+              <div style={{ display: 'flex', gap: 8, width: '100%', justifyContent: 'center', marginTop: 8 }}>
+                {[
+                  { label: 'STREAK',     val: `${streak}🔥` },
+                  { label: 'XP',         val: xp },
+                  { label: 'SERTIFIKAT', val: certCount },
+                ].map(stat => (
+                  <div key={stat.label} style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.07)', borderRadius: 12, padding: '12px 4px', textAlign: 'center' }}>
+                    <div className="font-mono" style={{ fontSize: 16, fontWeight: 800, color: 'white', marginBottom: 4 }}>{stat.val}</div>
+                    <div style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.05em' }}>{stat.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', justifyContent: 'center', borderTop: '1px solid #EAF0F6', backgroundColor: '#FAFAFB' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
               <div style={{ fontSize: 28 }}>{lvl.emoji}</div>
               <div>
@@ -337,10 +342,11 @@ export default function ProfilScreen({ onNavigate }) {
               </div>
             </div>
           </div>
+          </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 24, alignItems: 'start' }}>
-
+        {/* ── KANAN: Konten Utama (Aktivitas, Sertifikat, Pesanan) ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24, flex: 1, minWidth: 0 }}>
 
           <div style={{ backgroundColor: 'white', borderRadius: 16, border: '1px solid #EAF0F6', boxShadow: '0 2px 8px rgba(0,0,0,0.02)', overflow: 'hidden' }}>
             <div style={{ padding: '16px 20px', borderBottom: '1px solid #EAF0F6', fontSize: 14, fontWeight: 800, color: 'var(--c-dark)' }}>
