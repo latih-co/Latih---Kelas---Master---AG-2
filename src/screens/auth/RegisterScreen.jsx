@@ -20,6 +20,7 @@ export default function RegisterScreen({ onNavigate }) {
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState('');
   const [showPass, setShowPass] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   // Resend countdown
   const [resendCooldown, setResendCooldown] = useState(0);
@@ -43,6 +44,13 @@ export default function RegisterScreen({ onNavigate }) {
     if (!email)               { setError('Email wajib diisi.'); return; }
     if (password.length < 8)  { setError('Password minimal 8 karakter.'); return; }
     if (password !== confirm)  { setError('Password dan konfirmasi tidak cocok.'); return; }
+    // Validasi OK — tampilkan konfirmasi sebelum buat akun
+    setError('');
+    setShowConfirm(true);
+  };
+
+  const handleConfirmSubmit = async () => {
+    setShowConfirm(false);
     setLoading(true); setError('');
     try {
       const { error, needsVerification } = await signUp(email, password, name, jobRole, whatsapp);
@@ -54,12 +62,8 @@ export default function RegisterScreen({ onNavigate }) {
           setError(error.message || 'Terjadi kesalahan. Coba lagi.');
         }
       } else if (needsVerification) {
-        // Email confirmation required → tampilkan layar cek email
         setStep(3);
         setResendCooldown(60);
-      } else {
-        // Email confirmation OFF → user langsung login, App.jsx akan redirect ke beranda
-        // Tidak perlu lakukan apapun di sini
       }
     } catch (err) {
       setLoading(false);
@@ -135,7 +139,7 @@ export default function RegisterScreen({ onNavigate }) {
                   <input
                     type="text" id="reg-name" value={name}
                     onChange={e => setName(e.target.value)}
-                    placeholder="Masukkan nama lengkap sesuai KTP / ijazah"
+                    placeholder="Masukkan nama lengkap yang benar"
                     style={inputStyle}
                     onFocus={e => e.target.style.borderColor = '#0F172A'}
                     onBlur={e => e.target.style.borderColor = '#E2E8F0'}
@@ -149,7 +153,7 @@ export default function RegisterScreen({ onNavigate }) {
                     <span style={{ fontSize: 15, flexShrink: 0, lineHeight: 1 }}>🎓</span>
                     <p style={{ margin: 0, fontSize: 11.5, color: '#92400E', lineHeight: 1.6 }}>
                       <strong>Nama ini akan tercetak di sertifikat kamu.</strong>{' '}
-                      Pastikan sudah benar sesuai nama resmi (KTP / ijazah), karena{' '}
+                      Pastikan sudah benar, jika diperlukan tambahkan gelar, karena{' '}
                       <strong>tidak bisa diedit</strong> setelah akun dibuat.
                     </p>
                   </div>
@@ -375,6 +379,68 @@ export default function RegisterScreen({ onNavigate }) {
           </span>
         </p>
       </div>
+      {/* ── Modal Konfirmasi Nama & Email ── */}
+      {showConfirm && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: 20, fontFamily: "'Inter', sans-serif",
+        }}>
+          <div style={{
+            background: 'white', borderRadius: 24, padding: '32px 28px',
+            maxWidth: 400, width: '100%',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
+            animation: 'fadeInUp 0.2s ease',
+          }}>
+            <div style={{ textAlign: 'center', marginBottom: 20 }}>
+              <div style={{ fontSize: 40, marginBottom: 12 }}>🔍</div>
+              <h2 style={{ margin: '0 0 6px', fontSize: 18, fontWeight: 900, color: '#0F172A' }}>
+                Konfirmasi Data Akun
+              </h2>
+              <p style={{ margin: 0, fontSize: 13, color: '#64748B' }}>
+                Pastikan nama dan email sudah benar sebelum akun dibuat.
+              </p>
+            </div>
+
+            {/* Data konfirmasi */}
+            <div style={{ background: '#F8FAFC', borderRadius: 14, padding: '16px 18px', marginBottom: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>Nama (tercetak di sertifikat)</div>
+                <div style={{ fontSize: 15, fontWeight: 800, color: '#0F172A' }}>{name}</div>
+              </div>
+              <div style={{ height: 1, background: '#EAF0F6' }} />
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>Email</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', wordBreak: 'break-all' }}>{email}</div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => setShowConfirm(false)}
+                style={{
+                  flex: 1, padding: '12px', borderRadius: 12,
+                  background: 'white', border: '1.5px solid #E2E8F0',
+                  fontSize: 13, fontWeight: 700, color: '#64748B', cursor: 'pointer',
+                }}
+              >
+                ← Edit Data
+              </button>
+              <button
+                onClick={handleConfirmSubmit}
+                style={{
+                  flex: 2, padding: '12px', borderRadius: 12,
+                  background: '#0F172A', border: 'none',
+                  fontSize: 13, fontWeight: 800, color: 'white', cursor: 'pointer',
+                }}
+              >
+                ✅ Ya, Buat Akun
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
