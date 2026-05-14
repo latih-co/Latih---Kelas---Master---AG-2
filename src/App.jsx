@@ -39,9 +39,13 @@ export default function App() {
     const urlParams = new URLSearchParams(window.location.search);
     const verifyCode = urlParams.get('verify');
     if (verifyCode) return 'cert_verify';
-    // Detect return dari Tripay — baik via ?ref= (custom) maupun ?tripay_merchant_ref= (Tripay default)
+    // Detect return dari Tripay
     const payRef = urlParams.get('ref') || urlParams.get('tripay_merchant_ref');
     if (payRef && payRef.startsWith('LTC-')) return 'pesanan';
+    // Restore halaman terakhir dari sessionStorage (persist saat refresh)
+    const saved = sessionStorage.getItem('latih_page');
+    const NO_RESTORE = ['login', 'register', 'welcome', 'loading', 'landing'];
+    if (saved && !NO_RESTORE.includes(saved)) return saved;
     return 'landing';
   });
 
@@ -157,6 +161,14 @@ export default function App() {
   useEffect(() => { if (activeWebinar) localStorage.setItem("iso9001_webinar", JSON.stringify(activeWebinar)); else localStorage.removeItem("iso9001_webinar"); }, [activeWebinar]);
   useEffect(() => { localStorage.setItem("iso9001_completedQuizzes", JSON.stringify(completedQuizzes)); }, [completedQuizzes]);
 
+  // Simpan page aktif ke sessionStorage (persist saat refresh, tidak lintas tab)
+  useEffect(() => {
+    const NO_SAVE = ['login', 'register', 'welcome', 'loading'];
+    if (!NO_SAVE.includes(page)) {
+      sessionStorage.setItem('latih_page', page);
+    }
+  }, [page]);
+
   // Bersihkan query params Tripay/verify dari URL setelah params dibaca (sekali saat mount)
   useEffect(() => {
     if (window.location.search) {
@@ -181,6 +193,7 @@ export default function App() {
           'iso9001_guestTopicIds', 'iso9001_guestLessonId',
         ];
         LEARNING_KEYS.forEach(k => localStorage.removeItem(k));
+        sessionStorage.removeItem('latih_page'); // reset halaman saat logout
         // Reset React state
         setActiveTopic(null);
         setActiveSubLesson(null);
