@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Search, GraduationCap, Radio, User, Video } from 'lucide-react';
+import { Home, Search, GraduationCap, Radio, User, Video, ShieldCheck } from 'lucide-react';
 import LogoWarna from '../assets/Logo Latih Warna.png';
 import { useIsMobile } from '../utils/mobile';
 
@@ -32,6 +32,7 @@ export default function SidebarLayout({ children, activePage, onNavigate, user }
       label: "Akun",
       items: [
         { id: "profil", icon: <User size={18} />, label: "Profil Saya" },
+        { id: "cert_verify", icon: <ShieldCheck size={18} />, label: "Verifikasi Sertifikat", mobileHide: true },
       ]
     }
   ];
@@ -156,6 +157,36 @@ export default function SidebarLayout({ children, activePage, onNavigate, user }
         </div>
       )}
 
+      {/* Mobile: Floating Verifikasi Sertifikat shortcut */}
+      {isMobile && activePage !== 'cert_verify' && (
+        <button
+          onClick={() => onNavigate('cert_verify')}
+          style={{
+            position: 'fixed',
+            bottom: 85,
+            right: 16,
+            zIndex: 99,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 7,
+            padding: '9px 14px',
+            background: 'linear-gradient(135deg, #0F172A, #1E293B)',
+            color: 'white',
+            border: 'none',
+            borderRadius: 99,
+            fontSize: 12,
+            fontWeight: 800,
+            cursor: 'pointer',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
+            transition: 'all 0.2s',
+            letterSpacing: 0.2,
+          }}
+        >
+          <ShieldCheck size={14} />
+          Verifikasi Sertifikat
+        </button>
+      )}
+
       {/* Main Area */}
       <div style={{ flex: 1, overflowY: 'auto', position: 'relative', paddingBottom: isMobile ? 80 : 0 }}>
         {children}
@@ -169,7 +200,7 @@ export default function SidebarLayout({ children, activePage, onNavigate, user }
           display: 'flex', justifyContent: 'space-around', alignItems: 'flex-start',
           padding: '12px 10px 0', zIndex: 100, boxShadow: '0 -4px 20px rgba(0,0,0,0.03)'
         }}>
-          {navGroups.flatMap(g => g.items).map(item => {
+          {navGroups.flatMap(g => g.items).filter(item => !item.mobileHide).map(item => {
             const isActive = activePage === item.id;
             let displayLabel = item.label.split(' ')[0]; // Shortcut words
             if (item.id === "kelas_sertifikasi") displayLabel = "Training";

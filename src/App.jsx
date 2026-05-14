@@ -445,7 +445,7 @@ export default function App() {
   }
 
   // Khusus untuk landing, legal, auth, & admin pages → render full tanpa SidebarLayout
-  const FULL_SCREEN_PAGES = ['landing', 'terms', 'privacy', 'about', 'contact', 'login', 'register', 'admin', 'admin_new_event', 'admin_edit_event', 'cert_preview', 'cert_calibrator', 'cert_verify', 'welcome', 'pesanan'];
+  const FULL_SCREEN_PAGES = ['landing', 'terms', 'privacy', 'about', 'contact', 'login', 'register', 'admin', 'admin_new_event', 'admin_edit_event', 'cert_preview', 'cert_calibrator', 'welcome', 'pesanan'];
   if (FULL_SCREEN_PAGES.includes(page)) {
     return (
       <>
