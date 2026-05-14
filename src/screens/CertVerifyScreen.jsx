@@ -52,13 +52,9 @@ export default function CertVerifyScreen({ initialCode = '', onNavigate }) {
       {/* Header */}
       <div style={{ marginBottom: 40, textAlign: 'center' }}>
         <div style={{ fontSize: 40, marginBottom: 12 }}>🔍</div>
-        <h1 style={{ fontSize: 28, fontWeight: 900, color: '#0F172A', margin: '0 0 8px', letterSpacing: '-0.5px' }}>
+        <h1 style={{ fontSize: 28, fontWeight: 900, color: '#0F172A', margin: 0, letterSpacing: '-0.5px' }}>
           Verifikasi Sertifikat
         </h1>
-        <p style={{ fontSize: 14, color: '#64748B', margin: 0, maxWidth: 420, lineHeight: 1.6 }}>
-          Masukkan nomor sertifikat latih.co untuk memverifikasi keasliannya.
-          HRD dan recruiter dapat menggunakan halaman ini kapan saja.
-        </p>
       </div>
 
       {/* Input box */}

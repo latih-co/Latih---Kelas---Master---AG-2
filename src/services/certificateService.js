@@ -486,29 +486,45 @@ export function checkModuleEligibility(topic, completedQuizzes) {
 }
 
 // ── Verifikasi sertifikat berdasarkan cert_number (publik) ─────
+// Menggunakan RPC verify_certificate (SECURITY DEFINER) agar nama
+// pemegang bisa dibaca tanpa login (bypass RLS pada tabel profiles).
 export async function verifyCertificate(certNumber) {
   if (!certNumber?.trim()) return { error: 'Nomor sertifikat tidak boleh kosong.' };
 
-  // Ambil data sertifikat + holder_name langsung dari tabel certificates
-  // (tidak join ke profiles agar tidak terblokir RLS publik)
+  const target = certNumber.trim().toUpperCase();
+
+  // Coba via RPC dulu (SECURITY DEFINER, bisa bypass RLS)
+  const { data: rpc, error: rpcErr } = await supabase
+    .rpc('verify_certificate', { cert_num: target });
+
+  if (!rpcErr && rpc && rpc.length > 0) {
+    const row = rpc[0];
+    return {
+      data: {
+        certNumber: row.cert_number,
+        type:       row.type,
+        eventTitle: row.event_title,
+        issuedAt:   row.issued_at,
+        holderName: row.holder_name || 'Peserta',
+      },
+    };
+  }
+
+  // Fallback: query langsung (untuk lingkungan dev atau sebelum RPC dibuat)
   const { data: cert, error: certErr } = await supabase
     .from('certificates')
     .select('cert_number, type, event_title, issued_at, user_id, holder_name')
-    .eq('cert_number', certNumber.trim().toUpperCase())
+    .eq('cert_number', target)
     .maybeSingle();
 
   if (certErr) return { error: 'Terjadi kesalahan saat memverifikasi. Coba lagi.' };
   if (!cert)   return { error: 'Sertifikat tidak ditemukan. Pastikan nomor yang dimasukkan sudah benar.' };
 
-  // Prioritas: holder_name di certificates → fetch dari profiles → fallback
+  // Prioritas: holder_name di certificates → profiles (jika session ada) → fallback
   let holderName = cert.holder_name || null;
-
   if (!holderName && cert.user_id) {
     const { data: profile } = await supabase
-      .from('profiles')
-      .select('name')
-      .eq('id', cert.user_id)
-      .maybeSingle();
+      .from('profiles').select('name').eq('id', cert.user_id).maybeSingle();
     if (profile?.name) holderName = profile.name;
   }
 
