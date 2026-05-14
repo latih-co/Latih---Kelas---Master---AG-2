@@ -33,6 +33,7 @@ import AdminEventForm   from "./screens/admin/AdminEventForm";
 import CertVerifyScreen from "./screens/CertVerifyScreen";
 import WelcomeScreen    from "./screens/WelcomeScreen";
 import RincianPesananScreen from "./screens/RincianPesananScreen";
+import ForgotPasswordScreen from "./screens/auth/ForgotPasswordScreen";
 
 export default function App() {
   const [page, setPage] = useState(() => {
@@ -296,7 +297,7 @@ export default function App() {
 
   const renderContent = () => {
     // ── Halaman publik (tidak butuh login) ─────────────────────
-  const PUBLIC_PAGES = ['landing', 'login', 'register', 'terms', 'privacy', 'about', 'contact', 'detail_training', 'detail_webinar', 'kursus', 'topic', 'cert_verify', 'cert_preview', 'cert_calibrator'];
+  const PUBLIC_PAGES = ['landing', 'login', 'register', 'forgot_password', 'terms', 'privacy', 'about', 'contact', 'detail_training', 'detail_webinar', 'kursus', 'topic', 'cert_verify', 'cert_preview', 'cert_calibrator'];
     if (!session && !PUBLIC_PAGES.includes(page)) {
       return <LoginScreen onNavigate={goPage} />;
     }
@@ -309,6 +310,8 @@ export default function App() {
         }} />;
       case "register":
         return <RegisterScreen onNavigate={goPage} />;
+      case "forgot_password":
+        return <ForgotPasswordScreen onNavigate={goPage} />;
       case "terms":
         return <TermsScreen onBack={() => goPage("landing")} />;
       case "privacy":

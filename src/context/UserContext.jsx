@@ -157,6 +157,13 @@ export function UserProvider({ children }) {
     return { error };
   };
 
+  const resetPassword = async (email) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}?reset_password=1`,
+    });
+    return { error };
+  };
+
   const signUp = async (email, password, name, jobRole, whatsapp) => {
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -212,6 +219,7 @@ export function UserProvider({ children }) {
     signOut,
     updateProfile,
     resendVerification,
+    resetPassword,
   };
 
   return (
