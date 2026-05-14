@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useIsMobile } from '../utils/mobile';
 import { api } from '../services/api';
-import { verifyCertificate, CERT_TYPES } from '../services/certificateService';
 
 export default function KelasSertifikasiScreen({ onSelectTraining }) {
   const isMobile = useIsMobile();
@@ -233,8 +232,6 @@ export default function KelasSertifikasiScreen({ onSelectTraining }) {
             </div>
           </div>
 
-          {/* Card 3 — Verifikasi Sertifikat Interaktif */}
-          <CertVerifyWidget />
 
           {/* Card 4 — Trainer */}
           <div style={{ backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 16, padding: 18 }}>
@@ -253,94 +250,3 @@ export default function KelasSertifikasiScreen({ onSelectTraining }) {
   );
 }
 
-// ── Widget Verifikasi Sertifikat (sidebar) ─────────────────────
-function CertVerifyWidget() {
-  const [code,   setCode]   = useState('');
-  const [status, setStatus] = useState('idle'); // idle | loading | success | error
-  const [result, setResult] = useState(null);
-  const [errMsg, setErrMsg] = useState('');
-
-  const handleCheck = async () => {
-    if (!code.trim()) return;
-    setStatus('loading');
-    setResult(null);
-    setErrMsg('');
-    const res = await verifyCertificate(code.trim());
-    if (res.error) {
-      setStatus('error');
-      setErrMsg(res.error);
-    } else {
-      setStatus('success');
-      setResult(res.data);
-    }
-  };
-
-  const certConfig = result ? CERT_TYPES[result.type] : null;
-  const dateStr    = result?.issuedAt
-    ? new Date(result.issuedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
-    : '';
-
-  return (
-    <div style={{ backgroundColor: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: 16, padding: 18 }}>
-      <div style={{ fontSize: 11, fontWeight: 800, color: '#C2410C', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8 }}>
-        🏅 Verifikasi Sertifikat
-      </div>
-      <p style={{ fontSize: 12, color: '#7C2D12', lineHeight: 1.5, margin: '0 0 12px' }}>
-        HRD dapat mengecek keaslian sertifikat latih.co langsung di sini.
-      </p>
-
-      {/* Input */}
-      <div style={{ display: 'flex', gap: 6 }}>
-        <input
-          type="text"
-          value={code}
-          onChange={e => { setCode(e.target.value.toUpperCase()); setStatus('idle'); }}
-          onKeyDown={e => e.key === 'Enter' && handleCheck()}
-          placeholder="LTC-MOD-2025-XXXXX"
-          style={{
-            flex: 1, padding: '8px 10px',
-            border: '1px solid #FED7AA', borderRadius: 8,
-            fontSize: 11, fontFamily: 'monospace', fontWeight: 700,
-            color: '#7C2D12', background: 'white', outline: 'none',
-          }}
-        />
-        <button
-          onClick={handleCheck}
-          disabled={status === 'loading'}
-          style={{
-            padding: '8px 12px', borderRadius: 8,
-            background: status === 'loading' ? '#94A3B8' : '#C2410C',
-            color: 'white', border: 'none', fontSize: 11, fontWeight: 800,
-            cursor: status === 'loading' ? 'wait' : 'pointer', whiteSpace: 'nowrap',
-          }}
-        >
-          {status === 'loading' ? '⏳' : 'Cek →'}
-        </button>
-      </div>
-
-      {/* Success */}
-      {status === 'success' && result && (
-        <div style={{ marginTop: 12, background: '#F0FDF4', border: '1px solid #86EFAC', borderRadius: 10, padding: '10px 12px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-            <span style={{ fontSize: 14 }}>✅</span>
-            <span style={{ fontSize: 11, fontWeight: 800, color: '#15803D' }}>Sertifikat Valid</span>
-          </div>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#0F172A', marginBottom: 2 }}>{result.holderName}</div>
-          <div style={{ fontSize: 11, color: '#166534', marginBottom: 2 }}>{result.eventTitle}</div>
-          {certConfig && (
-            <div style={{ fontSize: 10, color: '#166534' }}>
-              {certConfig.emoji} {certConfig.label} · {dateStr}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Error */}
-      {status === 'error' && (
-        <div style={{ marginTop: 10, background: '#FFF1F2', border: '1px solid #FECDD3', borderRadius: 8, padding: '8px 10px', fontSize: 11, color: '#BE123C' }}>
-          ❌ {errMsg}
-        </div>
-      )}
-    </div>
-  );
-}
