@@ -240,8 +240,8 @@ export default function ProfilScreen({ onNavigate }) {
 
         {/* ── Info Kontak ── */}
         <div style={{ backgroundColor: 'white', borderRadius: 16, border: '1px solid #EAF0F6', boxShadow: '0 2px 8px rgba(0,0,0,0.02)', overflow: 'hidden' }}>
-          <div style={{ padding: '14px 20px', borderBottom: '1px solid #EAF0F6', fontSize: 14, fontWeight: 800, color: 'var(--c-dark)' }}>
-            📇 Info Kontak
+          <div style={{ padding: '14px 20px', borderBottom: '1px solid #EAF0F6', borderLeft: '4px solid #0EA5E9', background: 'linear-gradient(90deg, #F0F9FF 0%, white 100%)', display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, fontWeight: 800, color: 'var(--c-dark)' }}>
+            <span style={{ fontSize: 18 }}>📇</span> Info Kontak
           </div>
           <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
             {/* Nama — locked, dengan status request */}
@@ -349,8 +349,8 @@ export default function ProfilScreen({ onNavigate }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24, flex: 1, minWidth: 0 }}>
 
           <div style={{ backgroundColor: 'white', borderRadius: 16, border: '1px solid #EAF0F6', boxShadow: '0 2px 8px rgba(0,0,0,0.02)', overflow: 'hidden' }}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid #EAF0F6', fontSize: 14, fontWeight: 800, color: 'var(--c-dark)' }}>
-              📋 Aktivitas Training & Webinar
+            <div style={{ padding: '14px 20px', borderBottom: '1px solid #EAF0F6', borderLeft: '4px solid #F59E0B', background: 'linear-gradient(90deg, #FFFBEB 0%, white 100%)', display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, fontWeight: 800, color: 'var(--c-dark)' }}>
+              <span style={{ fontSize: 18 }}>📋</span> Aktivitas Training & Webinar
             </div>
             {registrations.length === 0 ? (
               <div style={{ padding: '32px 20px', textAlign: 'center', color: 'var(--c-muted)', fontSize: 13 }}>
@@ -496,8 +496,8 @@ export default function ProfilScreen({ onNavigate }) {
 
           {/* ── Sertifikat Saya ── */}
           <div style={{ backgroundColor: 'white', borderRadius: 16, border: '1px solid #EAF0F6', boxShadow: '0 2px 8px rgba(0,0,0,0.02)', overflow: 'hidden' }}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid #EAF0F6', fontSize: 14, fontWeight: 800, color: 'var(--c-dark)' }}>
-              🏅 Sertifikat Saya
+            <div style={{ padding: '14px 20px', borderBottom: '1px solid #EAF0F6', borderLeft: '4px solid #10B981', background: 'linear-gradient(90deg, #ECFDF5 0%, white 100%)', display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, fontWeight: 800, color: 'var(--c-dark)' }}>
+              <span style={{ fontSize: 18 }}>🏅</span> Sertifikat Saya
             </div>
             {certificates.length === 0 ? (
               <div style={{ padding: '32px 20px', textAlign: 'center', color: 'var(--c-muted)', fontSize: 13 }}>
@@ -601,8 +601,8 @@ export default function ProfilScreen({ onNavigate }) {
 
           {/* ── Riwayat Pesanan ── */}
           <div style={{ backgroundColor: 'white', borderRadius: 16, border: '1px solid #EAF0F6', boxShadow: '0 2px 8px rgba(0,0,0,0.02)', overflow: 'hidden' }}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid #EAF0F6', fontSize: 14, fontWeight: 800, color: 'var(--c-dark)' }}>
-              🧾 Riwayat Pesanan
+            <div style={{ padding: '14px 20px', borderBottom: '1px solid #EAF0F6', borderLeft: '4px solid #8B5CF6', background: 'linear-gradient(90deg, #F5F3FF 0%, white 100%)', display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, fontWeight: 800, color: 'var(--c-dark)' }}>
+              <span style={{ fontSize: 18 }}>🧾</span> Riwayat Pesanan
             </div>
             {payments.length === 0 ? (
               <div style={{ padding: '24px 20px', textAlign: 'center', color: 'var(--c-muted)', fontSize: 13 }}>
