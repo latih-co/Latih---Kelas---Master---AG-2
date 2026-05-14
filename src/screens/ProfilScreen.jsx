@@ -327,7 +327,6 @@ export default function ProfilScreen({ onNavigate }) {
               const showZoom = reg.events?.zoom_link &&
                 ['verified','paid','attended','quiz_unlocked'].includes(reg.status);
               const isWebAdvPremium = reg.events?.type === 'webinar_advanced' && reg.package === 'premium';
-              const isWebAdvFree    = reg.events?.type === 'webinar_advanced' && reg.package === 'free';
               // showExtra: free tidak dapat materi; webinar_advanced premium hanya setelah completed
               const showExtra = reg.events?.extra_link &&
                 !isWebAdvFree &&
