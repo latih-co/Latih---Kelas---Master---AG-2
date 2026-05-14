@@ -51,6 +51,14 @@ const makeQna = (webinar) => [
   },
 ];
 
+// ─── Format harga ───────────────────────────────────────────────────────
+const fmtRp = (val) => {
+  if (!val || val === 0) return 'Rp 0';
+  if (val >= 1000000) return `Rp ${(val / 1000000).toFixed(val % 1000000 === 0 ? 0 : 1)}jt`;
+  if (val >= 1000)    return `Rp ${(val / 1000).toFixed(val % 1000 === 0 ? 0 : 1)}k`;
+  return `Rp ${val.toLocaleString('id-ID')}`;
+};
+
 export default function DetailWebinarScreen({ webinar, onBack, onNavigate, isGuest = false }) {
   const isMobile = useIsMobile();
   const [openQna, setOpenQna] = useState(null);
@@ -204,7 +212,7 @@ export default function DetailWebinarScreen({ webinar, onBack, onNavigate, isGue
                   </div>
                   <div style={{ textAlign: 'center', background: 'linear-gradient(135deg, var(--c-teal), #6366F1)', borderRadius: 10, padding: '6px 4px' }}>
                     <div style={{ fontWeight: 800, color: 'white', fontSize: 13 }}>Premium</div>
-                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)', fontWeight: 600 }}>Rp 55k</div>
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)', fontWeight: 600 }}>{fmtRp(webinar.price_premium)}</div>
                   </div>
                 </div>
 
@@ -343,7 +351,7 @@ export default function DetailWebinarScreen({ webinar, onBack, onNavigate, isGue
                 </div>
                 <div style={{ flex: 1 }}>
                   {!isMobile && <div style={{ fontSize: 10, color: 'var(--c-muted)', fontWeight: 600, marginBottom: 2 }}>Paket Premium</div>}
-                  <div style={{ fontSize: isMobile ? 16 : 22, fontWeight: 900, color: 'var(--c-teal-dark)' }}>Rp 55k</div>
+                  <div style={{ fontSize: isMobile ? 16 : 22, fontWeight: 900, color: 'var(--c-teal-dark)' }}>{fmtRp(webinar.price_premium)}</div>
                   {isMobile && <div style={{ fontSize: 10, color: 'var(--c-teal-dark)', fontWeight: 600 }}>Paket Premium</div>}
                 </div>
               </div>
@@ -407,8 +415,8 @@ export default function DetailWebinarScreen({ webinar, onBack, onNavigate, isGue
             id:            webinar.id || webinar.title,
             type:          isReguler ? 'webinar_reguler' : 'webinar_advanced',
             title:         webinar.title,
-            price_regular: 0,
-            price_premium: webinar.priceNum || 55000,
+            price_regular: webinar.price_regular ?? 0,
+            price_premium: webinar.price_premium ?? 0,
           }}
           initialPackage={initPkg}
           onClose={() => setShowPayment(false)}
