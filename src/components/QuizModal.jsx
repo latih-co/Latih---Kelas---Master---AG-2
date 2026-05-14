@@ -387,6 +387,25 @@ export default function QuizModal({ event, registration, onClose, onComplete }) 
                     ⚠️ {downloadErr}
                   </div>
                 )}
+                {/* Fasilitas Tambahan — tampil jika event punya extra_link */}
+                {event?.extra_link && (
+                  <a
+                    href={event.extra_link}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                      width: '100%', padding: '12px 0',
+                      background: '#F0FDF4', color: '#15803D',
+                      border: '1.5px solid #86EFAC', borderRadius: 12,
+                      fontSize: 14, fontWeight: 800, textDecoration: 'none',
+                      marginBottom: 12, boxSizing: 'border-box',
+                      transition: 'background 0.15s',
+                    }}
+                  >
+                    📎 {event.extra_link_label || 'Fasilitas Tambahan'}
+                  </a>
+                )}
                 <button onClick={onClose} style={{ ...btn('white', '#64748B'), border: '1px solid #E2E8F0' }}>
                   Tutup
                 </button>
