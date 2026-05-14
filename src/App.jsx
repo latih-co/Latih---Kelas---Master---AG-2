@@ -157,6 +157,13 @@ export default function App() {
   useEffect(() => { if (activeWebinar) localStorage.setItem("iso9001_webinar", JSON.stringify(activeWebinar)); else localStorage.removeItem("iso9001_webinar"); }, [activeWebinar]);
   useEffect(() => { localStorage.setItem("iso9001_completedQuizzes", JSON.stringify(completedQuizzes)); }, [completedQuizzes]);
 
+  // Bersihkan query params Tripay/verify dari URL setelah params dibaca (sekali saat mount)
+  useEffect(() => {
+    if (window.location.search) {
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+  }, []);
+
   // ── Auto-redirect setelah login berhasil ──────────────────────────
   // Hanya redirect jika email sudah dikonfirmasi (bukan signup pending verification)
   useEffect(() => {
