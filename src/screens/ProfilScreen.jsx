@@ -444,104 +444,7 @@ export default function ProfilScreen({ onNavigate }) {
             })}
           </div>
 
-          {/* ── Riwayat Pesanan ── */}
-          <div style={{ backgroundColor: 'white', borderRadius: 16, border: '1px solid #EAF0F6', boxShadow: '0 2px 8px rgba(0,0,0,0.02)', overflow: 'hidden' }}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid #EAF0F6', fontSize: 14, fontWeight: 800, color: 'var(--c-dark)' }}>
-              🧾 Riwayat Pesanan
-            </div>
-            {payments.length === 0 ? (
-              <div style={{ padding: '24px 20px', textAlign: 'center', color: 'var(--c-muted)', fontSize: 13 }}>
-                <div style={{ fontSize: 24, marginBottom: 8 }}>🧾</div>
-                Belum ada transaksi pembayaran
-              </div>
-            ) : payments.map((pay, idx) => {
-              // Deteksi expired secara client-side (2 jam = 7.200.000ms)
-              const payCreatedMs = pay.created_at ? new Date(pay.created_at).getTime() : 0;
-              const isClientExpired = pay.status === 'pending' && payCreatedMs > 0 && (Date.now() - payCreatedMs > 3600000);
-              const effectiveStatus = isClientExpired ? 'expired' : pay.status;
-
-              const PAY_STATUS = {
-                pending:  { label: 'Menunggu',     color: '#F59E0B', bg: '#FEF3C7' },
-                paid:     { label: 'Terdaftar',    color: '#10B981', bg: '#D1FAE5' },
-                expired:  { label: 'Kedaluwarsa',  color: '#6B7280', bg: '#F3F4F6' },
-                failed:   { label: 'Gagal',        color: '#EF4444', bg: '#FEE2E2' },
-              };
-              const ps = PAY_STATUS[effectiveStatus] || PAY_STATUS.pending;
-              const evTitle = pay.registrations?.events?.title || 'Event';
-              const METHOD_SHORT = {
-                QRIS: 'QRIS', BRIVA: 'BRI VA', BNIVA: 'BNI VA',
-                MANDIRIVA: 'Mandiri VA', BCAVA: 'BCA VA',
-              };
-              const checkoutUrl = pay.tripay_reference
-                ? `https://tripay.co.id/checkout/${pay.tripay_reference}`
-                : null;
-              return (
-                <div key={pay.id} style={{ padding: '12px 18px', borderBottom: idx < payments.length - 1 ? '1px solid #EAF0F6' : 'none' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--c-dark)', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {evTitle}
-                      </div>
-                      <div style={{ fontSize: 10, color: 'var(--c-muted)' }}>
-                        {pay.tripay_merchant_ref} · {METHOD_SHORT[pay.payment_method] || pay.payment_method}
-                      </div>
-                      <div style={{ fontSize: 10, color: 'var(--c-muted)' }}>
-                        {new Date(pay.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Jakarta' })}
-                        {', '}
-                        {new Date(pay.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' })} WIB
-                      </div>
-                    </div>
-                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--c-dark)', marginBottom: 4 }}>
-                        Rp {Number(pay.amount).toLocaleString('id-ID')}
-                      </div>
-                      <div style={{ display: 'inline-block', fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 20, backgroundColor: ps.bg, color: ps.color }}>
-                        {ps.label}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Tombol untuk pending (belum expired) */}
-                  {effectiveStatus === 'pending' && checkoutUrl && (
-                    <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
-                      <a href={checkoutUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'none', flex: 1 }}>
-                        <button style={{
-                          width: '100%', padding: '8px 0', borderRadius: 8,
-                          background: 'linear-gradient(135deg, #0070F3, #0050B3)',
-                          color: 'white', border: 'none', fontSize: 12, fontWeight: 700,
-                          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                        }}>
-                          💳 Bayar Sekarang →
-                        </button>
-                      </a>
-                      <button
-                        onClick={() => onNavigate?.('pesanan', pay.tripay_merchant_ref)}
-                        style={{
-                          padding: '8px 14px', borderRadius: 8, flexShrink: 0,
-                          background: 'white', color: '#0F172A',
-                          border: '1px solid #EAF0F6', fontSize: 12, fontWeight: 700,
-                          cursor: 'pointer', whiteSpace: 'nowrap',
-                        }}
-                      >
-                        🧾 Rincian
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Tombol untuk expired — arahkan kembali ke event untuk buat pesanan baru */}
-                  {isClientExpired && (
-                    <div style={{ marginTop: 8, padding: '8px 12px', borderRadius: 8, background: '#F9FAFB', border: '1px solid #E5E7EB', fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                      <span>⌛ Transaksi kedaluwarsa. Daftar ulang untuk membuat pesanan baru.</span>
-                    </div>
-                  )}
-
-
-                </div>
-              );
-
-            })}
-          </div>
-
+          {/* ── Sertifikat Saya ── */}
           <div style={{ backgroundColor: 'white', borderRadius: 16, border: '1px solid #EAF0F6', boxShadow: '0 2px 8px rgba(0,0,0,0.02)', overflow: 'hidden' }}>
             <div style={{ padding: '16px 20px', borderBottom: '1px solid #EAF0F6', fontSize: 14, fontWeight: 800, color: 'var(--c-dark)' }}>
               🏅 Sertifikat Saya
@@ -645,6 +548,105 @@ export default function ProfilScreen({ onNavigate }) {
               );
             })}
           </div>
+
+          {/* ── Riwayat Pesanan ── */}
+          <div style={{ backgroundColor: 'white', borderRadius: 16, border: '1px solid #EAF0F6', boxShadow: '0 2px 8px rgba(0,0,0,0.02)', overflow: 'hidden' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid #EAF0F6', fontSize: 14, fontWeight: 800, color: 'var(--c-dark)' }}>
+              🧾 Riwayat Pesanan
+            </div>
+            {payments.length === 0 ? (
+              <div style={{ padding: '24px 20px', textAlign: 'center', color: 'var(--c-muted)', fontSize: 13 }}>
+                <div style={{ fontSize: 24, marginBottom: 8 }}>🧾</div>
+                Belum ada transaksi pembayaran
+              </div>
+            ) : payments.map((pay, idx) => {
+              // Deteksi expired secara client-side (2 jam = 7.200.000ms)
+              const payCreatedMs = pay.created_at ? new Date(pay.created_at).getTime() : 0;
+              const isClientExpired = pay.status === 'pending' && payCreatedMs > 0 && (Date.now() - payCreatedMs > 3600000);
+              const effectiveStatus = isClientExpired ? 'expired' : pay.status;
+
+              const PAY_STATUS = {
+                pending:  { label: 'Menunggu',     color: '#F59E0B', bg: '#FEF3C7' },
+                paid:     { label: 'Terdaftar',    color: '#10B981', bg: '#D1FAE5' },
+                expired:  { label: 'Kedaluwarsa',  color: '#6B7280', bg: '#F3F4F6' },
+                failed:   { label: 'Gagal',        color: '#EF4444', bg: '#FEE2E2' },
+              };
+              const ps = PAY_STATUS[effectiveStatus] || PAY_STATUS.pending;
+              const evTitle = pay.registrations?.events?.title || 'Event';
+              const METHOD_SHORT = {
+                QRIS: 'QRIS', BRIVA: 'BRI VA', BNIVA: 'BNI VA',
+                MANDIRIVA: 'Mandiri VA', BCAVA: 'BCA VA',
+              };
+              const checkoutUrl = pay.tripay_reference
+                ? `https://tripay.co.id/checkout/${pay.tripay_reference}`
+                : null;
+              return (
+                <div key={pay.id} style={{ padding: '12px 18px', borderBottom: idx < payments.length - 1 ? '1px solid #EAF0F6' : 'none' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--c-dark)', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {evTitle}
+                      </div>
+                      <div style={{ fontSize: 10, color: 'var(--c-muted)' }}>
+                        {pay.tripay_merchant_ref} · {METHOD_SHORT[pay.payment_method] || pay.payment_method}
+                      </div>
+                      <div style={{ fontSize: 10, color: 'var(--c-muted)' }}>
+                        {new Date(pay.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Jakarta' })}
+                        {', '}
+                        {new Date(pay.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' })} WIB
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--c-dark)', marginBottom: 4 }}>
+                        Rp {Number(pay.amount).toLocaleString('id-ID')}
+                      </div>
+                      <div style={{ display: 'inline-block', fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 20, backgroundColor: ps.bg, color: ps.color }}>
+                        {ps.label}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Tombol untuk pending (belum expired) */}
+                  {effectiveStatus === 'pending' && checkoutUrl && (
+                    <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
+                      <a href={checkoutUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'none', flex: 1 }}>
+                        <button style={{
+                          width: '100%', padding: '8px 0', borderRadius: 8,
+                          background: 'linear-gradient(135deg, #0070F3, #0050B3)',
+                          color: 'white', border: 'none', fontSize: 12, fontWeight: 700,
+                          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                        }}>
+                          💳 Bayar Sekarang →
+                        </button>
+                      </a>
+                      <button
+                        onClick={() => onNavigate?.('pesanan', pay.tripay_merchant_ref)}
+                        style={{
+                          padding: '8px 14px', borderRadius: 8, flexShrink: 0,
+                          background: 'white', color: '#0F172A',
+                          border: '1px solid #EAF0F6', fontSize: 12, fontWeight: 700,
+                          cursor: 'pointer', whiteSpace: 'nowrap',
+                        }}
+                      >
+                        🧾 Rincian
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Tombol untuk expired — arahkan kembali ke event untuk buat pesanan baru */}
+                  {isClientExpired && (
+                    <div style={{ marginTop: 8, padding: '8px 12px', borderRadius: 8, background: '#F9FAFB', border: '1px solid #E5E7EB', fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                      <span>⌛ Transaksi kedaluwarsa. Daftar ulang untuk membuat pesanan baru.</span>
+                    </div>
+                  )}
+
+
+                </div>
+              );
+
+            })}
+          </div>
+
 
         </div>
       </div>
