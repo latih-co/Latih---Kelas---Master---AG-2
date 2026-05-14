@@ -459,9 +459,17 @@ export default function PaymentModal({ event, onClose, onNavigate, initialPackag
               {fmtRp(event.price_regular)}
             </div>
           )}
-          <button onClick={() => setStep('choose_method')} style={btnStyle('#0070F3')}>
-            Pilih Metode Bayar →
-          </button>
+          {(() => {
+            const isFreeSelected = selectedPkg === 'free' && event.price_regular === 0;
+            return (
+              <button
+                onClick={() => isFreeSelected ? handleFreeDirectRegister() : setStep('choose_method')}
+                style={btnStyle(isFreeSelected ? '#15803D' : '#0070F3')}
+              >
+                {isFreeSelected ? '✅ Daftar Sekarang — Gratis' : 'Pilih Metode Bayar →'}
+              </button>
+            );
+          })()}
         </div>
       )}
 
