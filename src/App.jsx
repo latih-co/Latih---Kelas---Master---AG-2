@@ -36,13 +36,41 @@ import RincianPesananScreen from "./screens/RincianPesananScreen";
 import ForgotPasswordScreen from "./screens/auth/ForgotPasswordScreen";
 
 export default function App() {
+  const PAGE_PATH_MAP = {
+    'landing': '/',
+    'beranda': '/beranda',
+    'kursus': '/modul',
+    'training': '/training',
+    'webinar': '/webinar',
+    'rekaman': '/rekaman',
+    'profil': '/profil',
+    'login': '/login',
+    'register': '/register',
+    'terms': '/terms',
+    'privacy': '/privacy',
+    'about': '/about',
+    'contact': '/contact',
+    'sertifikat': '/sertifikat',
+    'admin_dashboard': '/admin',
+    'cert_verify': '/verify',
+    'pesanan': '/pesanan'
+  };
+
+  const PATH_PAGE_MAP = Object.fromEntries(Object.entries(PAGE_PATH_MAP).map(([k, v]) => [v, k]));
+
   const [page, setPage] = useState(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const verifyCode = urlParams.get('verify');
     if (verifyCode) return 'cert_verify';
+    
     // Detect return dari Tripay
     const payRef = urlParams.get('ref') || urlParams.get('tripay_merchant_ref');
     if (payRef && payRef.startsWith('LTC-')) return 'pesanan';
+
+    // Prioritaskan routing URL browser
+    const path = window.location.pathname;
+    if (PATH_PAGE_MAP[path]) return PATH_PAGE_MAP[path];
+
     // Restore halaman terakhir dari sessionStorage (persist saat refresh)
     const saved = sessionStorage.getItem('latih_page');
     const NO_RESTORE = ['login', 'register', 'welcome', 'loading', 'landing'];
@@ -170,11 +198,33 @@ export default function App() {
     }
   }, [page]);
 
-  // Bersihkan query params Tripay/verify dari URL setelah params dibaca (sekali saat mount)
+  // ── Sync URL & State ─────────────────────────────────────────
   useEffect(() => {
-    if (window.location.search) {
-      window.history.replaceState(null, '', window.location.pathname);
+    const newPath = PAGE_PATH_MAP[page];
+    if (newPath) {
+      // Hanya ganti URL jika berbeda (hindari infinite loop)
+      if (window.location.pathname !== newPath) {
+        window.history.pushState({ page }, '', newPath);
+      }
+    } else {
+      // Fallback bersihkan query params jika tidak ada path khusus
+      if (window.location.search && !window.location.pathname.startsWith('/lesson')) {
+        window.history.replaceState(null, '', window.location.pathname);
+      }
     }
+  }, [page]);
+
+  useEffect(() => {
+    const handlePopState = (e) => {
+      if (e.state && e.state.page) {
+        setPage(e.state.page);
+      } else {
+        const path = window.location.pathname;
+        if (PATH_PAGE_MAP[path]) setPage(PATH_PAGE_MAP[path]);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
   // ── Auto-redirect setelah login berhasil ──────────────────────────
