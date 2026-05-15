@@ -533,11 +533,11 @@ export default function LandingScreen({ onNavigate, onTrainingDetail, onWebinarD
               <div>
                 <h4 style={{ color: 'white', fontWeight: 700, marginBottom: 20, fontSize: 15 }}>Dukungan</h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                  <span style={{ cursor: 'pointer' }} onClick={() => onNavigate('about')}>Tentang Kami</span>
-                  <span style={{ cursor: 'pointer' }} onClick={() => onNavigate('contact')}>Kontak</span>
-                  <span style={{ cursor: 'pointer' }} onClick={() => onNavigate('terms')}>Syarat & Ketentuan</span>
-                  <span style={{ cursor: 'pointer' }} onClick={() => onNavigate('privacy')}>Kebijakan Privasi</span>
-                  <span style={{ cursor: 'pointer' }} onClick={() => onNavigate('cert_verify')}>Verifikasi Sertifikat</span>
+                  <a href="/about" onClick={e => { e.preventDefault(); onNavigate('about'); }} style={{ cursor: 'pointer', color: 'inherit', textDecoration: 'none' }}>Tentang Kami</a>
+                  <a href="/contact" onClick={e => { e.preventDefault(); onNavigate('contact'); }} style={{ cursor: 'pointer', color: 'inherit', textDecoration: 'none' }}>Kontak</a>
+                  <a href="/terms" onClick={e => { e.preventDefault(); onNavigate('terms'); }} style={{ cursor: 'pointer', color: 'inherit', textDecoration: 'none' }}>Syarat &amp; Ketentuan</a>
+                  <a href="/privacy" onClick={e => { e.preventDefault(); onNavigate('privacy'); }} style={{ cursor: 'pointer', color: 'inherit', textDecoration: 'none' }}>Kebijakan Privasi</a>
+                  <a href="/verify" onClick={e => { e.preventDefault(); onNavigate('cert_verify'); }} style={{ cursor: 'pointer', color: 'inherit', textDecoration: 'none' }}>Verifikasi Sertifikat</a>
                 </div>
               </div>
             </div>
