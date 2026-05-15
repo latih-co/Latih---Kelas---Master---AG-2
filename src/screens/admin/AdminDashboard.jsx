@@ -942,7 +942,14 @@ export default function AdminDashboard({ onNavigate }) {
                           disabled={nameActioning === req.id}
                           onClick={async () => {
                             setNameActioning(req.id);
-                            await approveNameChange(req.id, req.user_id, req.new_name);
+                            await approveNameChange(
+                              req.id,
+                              req.user_id,
+                              req.new_name,
+                              req.profiles?.email,
+                              req.old_name,
+                              req.profiles?.name
+                            );
                             setNameActioning('');
                             await loadAll();
                           }}
@@ -973,7 +980,14 @@ export default function AdminDashboard({ onNavigate }) {
                             disabled={nameActioning === req.id}
                             onClick={async () => {
                               setNameActioning(req.id);
-                              await rejectNameChange(req.id, rejectNote);
+                              await rejectNameChange(
+                                req.id,
+                                rejectNote,
+                                req.profiles?.email,
+                                req.old_name,
+                                req.new_name,
+                                req.profiles?.name
+                              );
                               setNameActioning('');
                               setRejectTarget(null);
                               await loadAll();

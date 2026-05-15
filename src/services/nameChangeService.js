@@ -1,5 +1,17 @@
 import { supabase } from '../lib/supabase';
 
+// ── Helper: kirim notifikasi email ke user ────────────────────────
+const sendNameChangeEmail = async ({ email, user_name, old_name, new_name, status, admin_note }) => {
+  try {
+    await supabase.functions.invoke('send-name-change-email', {
+      body: { email, user_name, old_name, new_name, status, admin_note },
+    });
+  } catch (e) {
+    // Email gagal tidak boleh menghentikan alur utama
+    console.warn('Email notifikasi gagal dikirim:', e.message);
+  }
+};
+
 // ── User: submit permintaan koreksi nama ─────────────────────────
 export const submitNameChangeRequest = async (oldName, newName, reason) => {
   const { data: { user } } = await supabase.auth.getUser();
@@ -36,8 +48,8 @@ export const getAllNameChangeRequests = async () => {
   return { data: data || [], error };
 };
 
-// ── Admin: approve → update nama profil + resolve request ────────
-export const approveNameChange = async (requestId, userId, newName) => {
+// ── Admin: approve → update nama profil + resolve request + kirim email ──
+export const approveNameChange = async (requestId, userId, newName, userEmail, oldName, userName) => {
   // 1. Update nama di profiles
   const { error: profileErr } = await supabase
     .from('profiles')
@@ -50,14 +62,40 @@ export const approveNameChange = async (requestId, userId, newName) => {
     .from('name_change_requests')
     .update({ status: 'approved', resolved_at: new Date().toISOString() })
     .eq('id', requestId);
+
+  // 3. Kirim email notifikasi (tidak block meski gagal)
+  if (!error && userEmail) {
+    await sendNameChangeEmail({
+      email: userEmail,
+      user_name: userName,
+      old_name: oldName,
+      new_name: newName,
+      status: 'approved',
+      admin_note: '',
+    });
+  }
+
   return { error };
 };
 
-// ── Admin: reject request ────────────────────────────────────────
-export const rejectNameChange = async (requestId, adminNote) => {
+// ── Admin: reject request + kirim email ──────────────────────────
+export const rejectNameChange = async (requestId, adminNote, userEmail, oldName, newName, userName) => {
   const { error } = await supabase
     .from('name_change_requests')
     .update({ status: 'rejected', admin_note: adminNote, resolved_at: new Date().toISOString() })
     .eq('id', requestId);
+
+  // Kirim email notifikasi (tidak block meski gagal)
+  if (!error && userEmail) {
+    await sendNameChangeEmail({
+      email: userEmail,
+      user_name: userName,
+      old_name: oldName,
+      new_name: newName,
+      status: 'rejected',
+      admin_note: adminNote,
+    });
+  }
+
   return { error };
 };
