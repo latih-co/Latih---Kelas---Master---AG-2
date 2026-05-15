@@ -3,7 +3,7 @@ import { useUser } from '../../context/UserContext';
 import LogoWarna from '../../assets/Logo Latih Warna.png';
 
 export default function LoginScreen({ onNavigate }) {
-  const { signIn, resendVerification } = useUser();
+  const { signIn, resendVerification, signInWithGoogle } = useUser();
   const [email, setEmail]             = useState('');
   const [password, setPassword]       = useState('');
   const [loading, setLoading]         = useState(false);
@@ -160,6 +160,25 @@ export default function LoginScreen({ onNavigate }) {
             <span style={{ fontSize: 12, color: '#CBD5E1' }}>atau</span>
             <div style={{ flex: 1, height: 1, background: '#EAF0F6' }} />
           </div>
+
+          <button
+            type="button"
+            onClick={async () => {
+              setLoading(true);
+              const { error } = await signInWithGoogle();
+              if (error) {
+                setError(error.message);
+                setLoading(false);
+              }
+            }}
+            disabled={loading}
+            style={{ width: '100%', padding: '12px', background: 'white', border: '1.5px solid #EAF0F6', borderRadius: 12, fontSize: 14, fontWeight: 700, color: '#0F172A', cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 24, transition: 'background-color 0.2s' }}
+            onMouseEnter={e => e.currentTarget.style.backgroundColor = '#F8FAFC'}
+            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'white'}
+          >
+            <img src="https://www.google.com/favicon.ico" alt="Google" style={{ width: 16, height: 16 }} />
+            Lanjutkan dengan Google
+          </button>
 
           <p style={{ textAlign: 'center', margin: 0, fontSize: 13, color: '#94A3B8' }}>
             Belum punya akun?{' '}

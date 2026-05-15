@@ -164,6 +164,16 @@ export function UserProvider({ children }) {
     return { error };
   };
 
+  const signInWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin,
+      }
+    });
+    return { error };
+  };
+
   const signUp = async (email, password, name, jobRole, whatsapp) => {
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -215,6 +225,7 @@ export function UserProvider({ children }) {
     loading,
     addXp,
     signIn,
+    signInWithGoogle,
     signUp,
     signOut,
     updateProfile,

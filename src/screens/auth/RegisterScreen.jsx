@@ -9,7 +9,7 @@ const JOB_ROLES = [
 ];
 
 export default function RegisterScreen({ onNavigate }) {
-  const { signUp, resendVerification } = useUser();
+  const { signUp, resendVerification, signInWithGoogle } = useUser();
   const [step, setStep]         = useState(1);
   const [name, setName]         = useState('');
   const [jobRole, setJobRole]   = useState('');
@@ -362,9 +362,38 @@ export default function RegisterScreen({ onNavigate }) {
             </div>
           )}
 
+          {/* Google Login — hanya di step 1 */}
+          {step === 1 && (
+            <div style={{ marginTop: 24, paddingTop: 24, borderTop: '1px solid #F1F5F9' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+                <div style={{ flex: 1, height: 1, background: '#EAF0F6' }} />
+                <span style={{ fontSize: 12, color: '#CBD5E1' }}>atau</span>
+                <div style={{ flex: 1, height: 1, background: '#EAF0F6' }} />
+              </div>
+              <button
+                type="button"
+                onClick={async () => {
+                  setLoading(true);
+                  const { error } = await signInWithGoogle();
+                  if (error) {
+                    setError(error.message);
+                    setLoading(false);
+                  }
+                }}
+                disabled={loading}
+                style={{ width: '100%', padding: '12px', background: 'white', border: '1.5px solid #EAF0F6', borderRadius: 12, fontSize: 14, fontWeight: 700, color: '#0F172A', cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'background-color 0.2s' }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = '#F8FAFC'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = 'white'}
+              >
+                <img src="https://www.google.com/favicon.ico" alt="Google" style={{ width: 16, height: 16 }} />
+                Daftar dengan Google
+              </button>
+            </div>
+          )}
+
           {/* Link ke login — hanya di step 1 & 2 */}
           {step < 3 && (
-            <div style={{ marginTop: 24, paddingTop: 24, borderTop: '1px solid #F1F5F9', textAlign: 'center' }}>
+            <div style={{ marginTop: 24, paddingTop: step === 2 ? 24 : 0, borderTop: step === 2 ? '1px solid #F1F5F9' : 'none', textAlign: 'center' }}>
               <span style={{ fontSize: 13, color: '#94A3B8' }}>
                 Sudah punya akun?{' '}
                 <span onClick={() => onNavigate('login')} style={{ color: '#0F172A', fontWeight: 700, cursor: 'pointer' }}>Masuk</span>
