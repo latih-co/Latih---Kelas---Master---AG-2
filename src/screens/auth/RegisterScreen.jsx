@@ -389,7 +389,7 @@ export default function RegisterScreen({ onNavigate }) {
 
           {/* Google Login — hanya di step 1 */}
           {step === 1 && (
-            <div style={{ marginTop: 24, paddingTop: 24, borderTop: '1px solid #F1F5F9' }}>
+            <div style={{ marginTop: 24 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
                 <div style={{ flex: 1, height: 1, background: '#EAF0F6' }} />
                 <span style={{ fontSize: 12, color: '#CBD5E1' }}>atau</span>
