@@ -890,9 +890,13 @@ export default function AdminDashboard({ onNavigate }) {
 
       {/* ── TAB: Koreksi Nama ── */}
       {!loading && tab === 'name_changes' && (
-        <div style={{ padding: isMobile ? '16px' : '24px 32px' }}>
-          <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--c-dark)', margin: '0 0 16px' }}>✏️ Permintaan Koreksi Nama</h2>
-
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 8 }}>
+            <h2 style={{ fontWeight: 900, color: 'var(--c-dark)', margin: 0, fontSize: 20 }}>✏️ Koreksi Nama</h2>
+            <span style={{ fontSize: 12, color: 'var(--c-muted)' }}>
+              {nameReqs.filter(r => r.status === 'pending').length} menunggu · {nameReqs.length} total
+            </span>
+          </div>
           {nameReqs.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '48px 24px', background: 'white', borderRadius: 16, border: '1px solid #EAF0F6', color: 'var(--c-muted)', fontSize: 14 }}>
               <div style={{ fontSize: 32, marginBottom: 12 }}>📭</div>
