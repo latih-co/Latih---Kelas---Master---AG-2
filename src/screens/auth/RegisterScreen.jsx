@@ -29,8 +29,9 @@ export default function RegisterScreen({ onNavigate }) {
 
   const handleStep1 = (e) => {
     e.preventDefault();
-    if (!name.trim()) { setError('Nama lengkap wajib diisi.'); return; }
-    if (!jobRole.trim()) { setError('Peran pekerjaan wajib diisi.'); return; }
+    if (!name.trim())     { setError('Nama lengkap wajib diisi.'); return; }
+    if (!jobRole.trim())  { setError('Peran pekerjaan wajib diisi.'); return; }
+    if (!whatsapp.trim()) { setError('Nomor WhatsApp wajib diisi.'); return; }
     setError(''); setStep(2);
   };
 
@@ -168,10 +169,7 @@ export default function RegisterScreen({ onNavigate }) {
 
                   {/* Nomor WhatsApp — opsional */}
                   <div>
-                    <label style={labelStyle}>
-                      NOMOR WHATSAPP
-                      <span style={{ fontWeight: 400, color: '#CBD5E1', marginLeft: 6, fontSize: 11 }}>— opsional</span>
-                    </label>
+                    <label style={labelStyle}>NOMOR WHATSAPP</label>
                     <div style={{ position: 'relative' }}>
                       <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 16, pointerEvents: 'none' }}>📱</span>
                       <input
