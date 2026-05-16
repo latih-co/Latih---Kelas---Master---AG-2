@@ -2,11 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useUser } from '../../context/UserContext';
 import LogoWarna from '../../assets/Logo Latih Warna.png';
 
-const JOB_ROLES = [
-  'QA / Quality Control', 'Regulatory Affairs', 'Production / Operasional',
-  'R&D / Formulasi', 'Supply Chain / Logistik', 'HSE / K3',
-  'Marketing / Product Manager', 'Fresh Graduate / Mahasiswa', 'Lainnya',
-];
 
 export default function RegisterScreen({ onNavigate }) {
   const { signUp, resendVerification, signInWithGoogle } = useUser();
@@ -35,7 +30,7 @@ export default function RegisterScreen({ onNavigate }) {
   const handleStep1 = (e) => {
     e.preventDefault();
     if (!name.trim()) { setError('Nama lengkap wajib diisi.'); return; }
-    if (!jobRole)     { setError('Pilih peran pekerjaan kamu.'); return; }
+    if (!jobRole.trim()) { setError('Peran pekerjaan wajib diisi.'); return; }
     setError(''); setStep(2);
   };
 
@@ -160,21 +155,15 @@ export default function RegisterScreen({ onNavigate }) {
                 </div>
 
                 <div>
-                  <label style={labelStyle}>PERAN PEKERJAAN</label>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    {JOB_ROLES.map(role => (
-                      <button
-                        key={role} type="button" onClick={() => setJobRole(role)}
-                        style={{
-                          padding: '7px 13px', borderRadius: 99, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                          border: jobRole === role ? '1.5px solid #0F172A' : '1.5px solid #E2E8F0',
-                          background: jobRole === role ? '#0F172A' : 'white',
-                          color: jobRole === role ? 'white' : '#64748B',
-                          transition: 'all 0.15s',
-                        }}
-                      >{role}</button>
-                    ))}
-                  </div>
+                  <label style={labelStyle}>PERAN / JABATAN PEKERJAAN</label>
+                  <input
+                    type="text" id="reg-job-role" value={jobRole}
+                    onChange={e => setJobRole(e.target.value)}
+                    placeholder="Contoh: QA Manager, Production Supervisor, R&D Officer..."
+                    style={inputStyle}
+                    onFocus={e => e.target.style.borderColor = '#0F172A'}
+                    onBlur={e => e.target.style.borderColor = '#E2E8F0'}
+                  />
                 </div>
 
                   {/* Nomor WhatsApp — opsional */}
