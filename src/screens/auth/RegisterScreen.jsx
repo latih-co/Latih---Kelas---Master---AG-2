@@ -132,26 +132,35 @@ export default function RegisterScreen({ onNavigate }) {
               <form onSubmit={handleStep1} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <div>
                   <label style={labelStyle}>NAMA LENGKAP</label>
-                  <input
-                    type="text" id="reg-name" value={name}
-                    onChange={e => setName(e.target.value)}
-                    placeholder="Masukkan nama lengkap yang benar"
-                    style={inputStyle}
-                    onFocus={e => e.target.style.borderColor = '#0F172A'}
-                    onBlur={e => e.target.style.borderColor = '#E2E8F0'}
-                  />
-                  {/* Notice sertifikat */}
-                  <div style={{
-                    display: 'flex', alignItems: 'flex-start', gap: 8,
-                    background: '#FFFBEB', border: '1px solid #FCD34D',
-                    borderRadius: 10, padding: '10px 12px', marginTop: 8,
-                  }}>
-                    <span style={{ fontSize: 15, flexShrink: 0, lineHeight: 1 }}>🎓</span>
-                    <p style={{ margin: 0, fontSize: 11.5, color: '#92400E', lineHeight: 1.6 }}>
-                      <strong>Nama ini akan tercetak di sertifikat kamu.</strong>{' '}
-                      Pastikan sudah benar, jika diperlukan tambahkan gelar, karena{' '}
-                      <strong>tidak bisa diedit</strong> setelah akun dibuat.
-                    </p>
+                  <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                    <div style={{ flex: 1 }}>
+                      <input
+                        type="text" id="reg-name" value={name}
+                        onChange={e => setName(e.target.value)}
+                        placeholder="Masukkan nama lengkap"
+                        style={inputStyle}
+                        onFocus={e => e.target.style.borderColor = '#0F172A'}
+                        onBlur={e => e.target.style.borderColor = '#E2E8F0'}
+                      />
+                    </div>
+                    {/* Notice sertifikat bubble */}
+                    <div style={{
+                      position: 'relative', display: 'flex', alignItems: 'flex-start', gap: 6,
+                      background: '#FFFBEB', border: '1px solid #FCD34D',
+                      borderRadius: 10, padding: '10px 12px', flex: '0 0 45%', boxSizing: 'border-box'
+                    }}>
+                      <div style={{
+                        position: 'absolute', top: 12, left: -6,
+                        width: 10, height: 10, background: '#FFFBEB',
+                        borderLeft: '1px solid #FCD34D', borderBottom: '1px solid #FCD34D',
+                        transform: 'rotate(45deg)'
+                      }} />
+                      <span style={{ fontSize: 14, flexShrink: 0, position: 'relative', zIndex: 1 }}>🎓</span>
+                      <p style={{ margin: 0, fontSize: 10.5, color: '#92400E', lineHeight: 1.5, position: 'relative', zIndex: 1 }}>
+                        <strong>Akan tercetak di sertifikat.</strong><br/>
+                        Pastikan benar (tambahkan gelar jika ada). <strong>Tidak bisa diedit</strong> nanti.
+                      </p>
+                    </div>
                   </div>
                 </div>
 
