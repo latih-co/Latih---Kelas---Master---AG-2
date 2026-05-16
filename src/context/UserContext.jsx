@@ -27,6 +27,7 @@ export function UserProvider({ children }) {
   const [xp, setXp]           = useState(0);
   const [streak, setStreak]   = useState(0);
   const [loading, setLoading] = useState(true);
+  const [needsProfileCompletion, setNeedsProfileCompletion] = useState(false);
 
   // Sync streak ke localStorage
   useEffect(() => {
@@ -76,6 +77,8 @@ export function UserProvider({ children }) {
         setUser(data);
         setXp(data.xp || 0);
         setStreak(initStreakFromStorage());
+        // Profil dianggap belum lengkap jika whatsapp atau job_role kosong
+        setNeedsProfileCompletion(!data.whatsapp || !data.job_role);
       }
     } catch (err) {
       console.error('Gagal load profil:', err.message);
@@ -213,16 +216,21 @@ export function UserProvider({ children }) {
       .eq('id', session.user.id)
       .select()
       .single();
-    if (!error && data) setUser(data);
+    if (!error && data) {
+      setUser(data);
+      // Re-cek apakah profil sudah lengkap setelah update
+      setNeedsProfileCompletion(!data.whatsapp || !data.job_role);
+    }
     return { data, error };
   };
 
   const value = {
-    session,        // Supabase session (null = belum login)
-    user,           // Profil dari tabel profiles
+    session,
+    user,
     xp,
     streak,
     loading,
+    needsProfileCompletion,
     addXp,
     signIn,
     signInWithGoogle,

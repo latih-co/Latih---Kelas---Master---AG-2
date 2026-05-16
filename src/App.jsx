@@ -34,6 +34,7 @@ import CertVerifyScreen from "./screens/CertVerifyScreen";
 import WelcomeScreen    from "./screens/WelcomeScreen";
 import RincianPesananScreen from "./screens/RincianPesananScreen";
 import ForgotPasswordScreen from "./screens/auth/ForgotPasswordScreen";
+import CompleteProfileModal from "./screens/auth/CompleteProfileModal";
 
 export default function App() {
   const PAGE_PATH_MAP = {
@@ -107,7 +108,7 @@ export default function App() {
     return null;
   });
 
-  const { session, user, xp, streak, loading, addXp } = useUser();
+  const { session, user, xp, streak, loading, addXp, needsProfileCompletion } = useUser();
   const guestLimit = useGuestLimit();
   const [showGuestGate, setShowGuestGate] = useState(false);
   const [guestGateReason, setGuestGateReason] = useState('sublesson');
@@ -552,6 +553,8 @@ export default function App() {
           onClose={() => setShowGuestGate(false)}
         />
       )}
+      {/* Modal konfirmasi profil untuk user Google baru */}
+      {session && needsProfileCompletion && <CompleteProfileModal />}
     </SidebarLayout>
   );
 }
