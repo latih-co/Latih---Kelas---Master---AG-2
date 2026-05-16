@@ -93,6 +93,46 @@ export default function RegisterScreen({ onNavigate }) {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#FFFCF8', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', sans-serif", padding: '20px' }}>
+      <style>{`
+        .reg-notice-bubble {
+          position: absolute;
+          top: 0;
+          left: calc(100% + 44px);
+          width: 250px;
+          display: flex;
+          align-items: flex-start;
+          gap: 6px;
+          background: #FFFBEB;
+          border: 1px solid #FCD34D;
+          border-radius: 12px;
+          padding: 12px 14px;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+          z-index: 10;
+        }
+        .reg-notice-arrow {
+          position: absolute;
+          top: 16px;
+          left: -6px;
+          width: 10px;
+          height: 10px;
+          background: #FFFBEB;
+          border-left: 1px solid #FCD34D;
+          border-bottom: 1px solid #FCD34D;
+          transform: rotate(45deg);
+        }
+        @media (max-width: 900px) {
+          .reg-notice-bubble {
+            position: static;
+            width: 100%;
+            margin-top: 10px;
+            box-shadow: none;
+            padding: 10px 12px;
+          }
+          .reg-notice-arrow {
+            display: none;
+          }
+        }
+      `}</style>
 
       <div style={{ width: '100%', maxWidth: 460 }}>
 
@@ -132,29 +172,18 @@ export default function RegisterScreen({ onNavigate }) {
               <form onSubmit={handleStep1} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <div>
                   <label style={labelStyle}>NAMA LENGKAP</label>
-                  <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                    <div style={{ flex: 1 }}>
-                      <input
-                        type="text" id="reg-name" value={name}
-                        onChange={e => setName(e.target.value)}
-                        placeholder="Masukkan nama lengkap"
-                        style={inputStyle}
-                        onFocus={e => e.target.style.borderColor = '#0F172A'}
-                        onBlur={e => e.target.style.borderColor = '#E2E8F0'}
-                      />
-                    </div>
-                    {/* Notice sertifikat bubble */}
-                    <div style={{
-                      position: 'relative', display: 'flex', alignItems: 'flex-start', gap: 6,
-                      background: '#FFFBEB', border: '1px solid #FCD34D',
-                      borderRadius: 10, padding: '10px 12px', flex: '0 0 45%', boxSizing: 'border-box'
-                    }}>
-                      <div style={{
-                        position: 'absolute', top: 12, left: -6,
-                        width: 10, height: 10, background: '#FFFBEB',
-                        borderLeft: '1px solid #FCD34D', borderBottom: '1px solid #FCD34D',
-                        transform: 'rotate(45deg)'
-                      }} />
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type="text" id="reg-name" value={name}
+                      onChange={e => setName(e.target.value)}
+                      placeholder="Masukkan nama lengkap"
+                      style={{ ...inputStyle, width: '100%' }}
+                      onFocus={e => e.target.style.borderColor = '#0F172A'}
+                      onBlur={e => e.target.style.borderColor = '#E2E8F0'}
+                    />
+                    {/* Notice sertifikat bubble (outside card on desktop) */}
+                    <div className="reg-notice-bubble">
+                      <div className="reg-notice-arrow" />
                       <span style={{ fontSize: 14, flexShrink: 0, position: 'relative', zIndex: 1 }}>🎓</span>
                       <p style={{ margin: 0, fontSize: 10.5, color: '#92400E', lineHeight: 1.5, position: 'relative', zIndex: 1 }}>
                         <strong>Akan tercetak di sertifikat.</strong><br/>
