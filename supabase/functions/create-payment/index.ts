@@ -83,6 +83,17 @@ serve(async (req) => {
       if (coupon.min_amount && baseAmount < coupon.min_amount) throw new Error(`Kupon hanya berlaku untuk transaksi minimal Rp ${fmtRp(coupon.min_amount)}`);
       if (coupon.event_ids && coupon.event_ids.length > 0 && !coupon.event_ids.includes(event_id)) throw new Error("Kupon tidak berlaku untuk event ini");
 
+      // Validasi kupon personal: hanya pemilik yang boleh pakai
+      if (coupon.user_id && coupon.user_id !== user.id) throw new Error("Kupon ini tidak dapat digunakan untuk akun kamu");
+
+      // Validasi pembatasan tipe event (kupon loyalty hanya untuk training & webinar_advanced)
+      if (coupon.event_type_restriction && coupon.event_type_restriction.length > 0) {
+        if (!coupon.event_type_restriction.includes(event.type)) {
+          throw new Error("Kupon ini hanya berlaku untuk event Training dan Webinar Advanced");
+        }
+      }
+
+
       // Hitung nominal diskon
       if (coupon.discount_type === "percentage") {
         discountAmount = Math.floor(baseAmount * coupon.discount_value / 100);

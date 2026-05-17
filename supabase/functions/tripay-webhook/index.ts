@@ -65,7 +65,7 @@ serve(async (req) => {
   // ── Cari payment berdasarkan merchant_ref ───────────────────
   const { data: payment, error: payError } = await supabase
     .from("payments")
-    .select("*, registrations(id, user_id, event_id, events(zoom_link, title))")
+    .select("*, registrations(id, user_id, event_id, events(zoom_link, title, type))")
     .eq("tripay_merchant_ref", merchant_ref)
     .single();
 
@@ -87,6 +87,10 @@ serve(async (req) => {
 
   // ── Jika PAID → update registrasi ──────────────────────────
   if (status === "PAID") {
+    const reg       = payment.registrations;
+    const eventType = reg?.events?.type;  // 'training' | 'webinar_reguler' | 'webinar_advanced'
+    const userId    = reg?.user_id;
+
     if (payment.is_upgrade) {
       // ── Mode Upgrade: ubah paket free → premium & buka kuis ──
       await supabase.from("registrations").update({
@@ -100,35 +104,57 @@ serve(async (req) => {
         status: "paid",
       }).eq("id", payment.registration_id);
 
-    // Trigger kirim email Zoom (panggil edge function send-zoom-email)
-    try {
-      const reg   = payment.registrations;
-      const event = reg?.events;
-      if (event?.zoom_link && reg?.user_id) {
-        // Ambil email user
-        const { data: profile } = await supabase.auth.admin.getUserById(reg.user_id);
-        const userEmail = profile?.user?.email;
+      // Trigger kirim email Zoom (panggil edge function send-zoom-email)
+      try {
+        const event = reg?.events;
+        if (event?.zoom_link && userId) {
+          // Ambil email user
+          const { data: profile } = await supabase.auth.admin.getUserById(userId);
+          const userEmail = profile?.user?.email;
 
-        if (userEmail) {
-          await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-zoom-email`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
-            },
-            body: JSON.stringify({
-              email:     userEmail,
-              zoom_link: event.zoom_link,
-              event_title: event.title,
-            }),
-          });
+          if (userEmail) {
+            await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-zoom-email`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+              },
+              body: JSON.stringify({
+                email:     userEmail,
+                zoom_link: event.zoom_link,
+                event_title: event.title,
+              }),
+            });
+          }
         }
+      } catch (emailErr) {
+        console.error("Gagal kirim email Zoom:", emailErr.message);
+        // Jangan gagalkan webhook karena gagal email
       }
-    } catch (emailErr) {
-      console.error("Gagal kirim email Zoom:", emailErr.message);
-      // Jangan gagalkan webhook karena gagal email
-    }
     } // end else (normal payment)
+
+    // ── Generate kupon loyalty (training & webinar_advanced) ──
+    // Berlaku untuk mode normal DAN upgrade
+    const LOYALTY_ELIGIBLE_TYPES = ["training", "webinar_advanced"];
+    if (userId && eventType && LOYALTY_ELIGIBLE_TYPES.includes(eventType)) {
+      try {
+        const { data: couponCode, error: couponErr } = await supabase.rpc(
+          "generate_loyalty_coupon",
+          {
+            p_user_id:         userId,
+            p_source_event_id: reg?.event_id || null,
+          }
+        );
+        if (couponErr) {
+          console.error("Gagal generate kupon loyalty:", couponErr.message);
+        } else {
+          console.log(`Kupon loyalty '${couponCode}' dibuat untuk user ${userId} (event: ${eventType})`);
+        }
+      } catch (couponGenErr) {
+        console.error("Exception saat generate kupon loyalty:", couponGenErr.message);
+        // Jangan gagalkan webhook karena gagal generate kupon
+      }
+    }
   }
 
   console.log(`Webhook processed: ${merchant_ref} → ${status}`);

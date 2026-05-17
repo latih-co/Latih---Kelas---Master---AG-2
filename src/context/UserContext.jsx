@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 
 const UserContext = createContext();
@@ -207,6 +207,13 @@ export function UserProvider({ children }) {
     localStorage.removeItem('iso9001_subLessonId');
   };
 
+  // ── Refresh profil dari DB (ambil ulang data terbaru) ──────────
+  const refreshProfile = useCallback(async () => {
+    if (!session) return;
+    await loadProfile(session.user.id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session]);
+
   // ── Update profil ────────────────────────────────────────────
   const updateProfile = async (updates) => {
     if (!session) return { error: new Error('Tidak login') };
@@ -237,6 +244,7 @@ export function UserProvider({ children }) {
     signUp,
     signOut,
     updateProfile,
+    refreshProfile,
     resendVerification,
     resetPassword,
   };

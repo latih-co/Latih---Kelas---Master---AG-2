@@ -6,11 +6,12 @@ import QuizModal from '../components/QuizModal';
 import UpgradeModal from '../components/UpgradeModal';
 import { generateCertPDF, downloadCertPDF, CERT_TYPES } from '../services/certificateService';
 import { submitNameChangeRequest, getMyNameChangeRequest } from '../services/nameChangeService';
+import { getMyActiveCoupons } from '../services/couponService';
 import NameChangeModal from '../components/NameChangeModal';
 
 export default function ProfilScreen({ onNavigate }) {
   const isMobile = useIsMobile();
-  const { user, xp, streak, signOut, updateProfile } = useUser();
+  const { user, xp, streak, signOut, updateProfile, refreshProfile } = useUser();
 
   const [certificates, setCertificates]     = useState([]);
   const [registrations, setRegistrations]   = useState([]);
@@ -26,10 +27,15 @@ export default function ProfilScreen({ onNavigate }) {
   const [nameRequest, setNameRequest]       = useState(null);  // request koreksi nama terakhir
   const [showNameModal, setShowNameModal]   = useState(false);
   const [nameReqLoading, setNameReqLoading] = useState(false);
+  const [myCoupons, setMyCoupons]           = useState([]);  // kupon loyalty milik user
+  const [copiedCode, setCopiedCode]         = useState('');  // kode yang baru di-copy
 
   const loadData = useCallback(async () => {
     if (!user) return;
     try {
+      // Refresh profil dari DB agar nama terbaru tampil jika sudah disetujui
+      await refreshProfile();
+
       // Load name change request
       const { data: ncr } = await getMyNameChangeRequest();
       setNameRequest(ncr || null);
@@ -55,12 +61,17 @@ export default function ProfilScreen({ onNavigate }) {
       setCertificates(certs || []);
       setRegistrations(regs || []);
       setPayments(pays || []);
+
+      // Load kupon loyalty milik user
+      const { data: couponsData } = await getMyActiveCoupons();
+      setMyCoupons(couponsData || []);
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
-  }, [user]);
+
+  }, [user, refreshProfile]);
 
   useEffect(() => {
     loadData();
@@ -698,8 +709,127 @@ export default function ProfilScreen({ onNavigate }) {
           </div>
 
 
+          {/* ── Kupon Saya ── */}
+          <div style={{ backgroundColor: 'white', borderRadius: 16, border: '1px solid #EAF0F6', boxShadow: '0 2px 8px rgba(0,0,0,0.02)', overflow: 'hidden' }}>
+            <div style={{ padding: '14px 20px', borderBottom: '1px solid #EAF0F6', borderLeft: '4px solid #F59E0B', background: 'linear-gradient(90deg, #FFFBEB 0%, white 100%)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, fontWeight: 800, color: 'var(--c-dark)' }}>
+                <span style={{ fontSize: 18 }}>🎟️</span> Kupon Saya
+              </div>
+              {myCoupons.length > 0 && (
+                <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 10px', borderRadius: 99, background: '#FEF3C7', color: '#B45309' }}>
+                  {myCoupons.length} aktif
+                </span>
+              )}
+            </div>
+
+            {myCoupons.length === 0 ? (
+              <div style={{ padding: '32px 20px', textAlign: 'center', color: 'var(--c-muted)', fontSize: 13 }}>
+                <div style={{ fontSize: 28, marginBottom: 8 }}>🎟️</div>
+                <div style={{ fontWeight: 600, marginBottom: 4 }}>Belum ada kupon</div>
+                <div style={{ fontSize: 12, color: '#94A3B8' }}>Kamu akan mendapat kupon loyalty setiap kali berhasil mendaftar dan membayar Training atau Webinar Advanced.</div>
+              </div>
+            ) : (
+              <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {myCoupons.map((coupon) => {
+                  const isUsed    = coupon.max_uses !== null && coupon.current_uses >= coupon.max_uses;
+                  const isExpired = coupon.valid_until && new Date(coupon.valid_until) < new Date();
+                  const daysLeft  = coupon.valid_until
+                    ? Math.ceil((new Date(coupon.valid_until) - new Date()) / (1000 * 60 * 60 * 24))
+                    : null;
+                  const discLabel = coupon.discount_type === 'percentage'
+                    ? `${coupon.discount_value}%${coupon.max_discount ? ` (maks Rp ${Number(coupon.max_discount).toLocaleString('id-ID')})` : ''}`
+                    : `Rp ${Number(coupon.discount_value).toLocaleString('id-ID')}`;
+                  const isCopied  = copiedCode === coupon.code;
+
+                  const statusBg    = isUsed ? '#F1F5F9' : isExpired ? '#FEE2E2' : '#ECFDF5';
+                  const statusColor = isUsed ? '#94A3B8' : isExpired ? '#DC2626' : '#15803D';
+                  const statusLabel = isUsed ? '✓ Sudah Dipakai' : isExpired ? '⌛ Kadaluarsa' : '✅ Aktif';
+
+                  return (
+                    <div
+                      key={coupon.id}
+                      style={{
+                        borderRadius: 12,
+                        border: `2px dashed ${isUsed || isExpired ? '#E2E8F0' : '#FCD34D'}`,
+                        padding: '14px 16px',
+                        background: isUsed || isExpired ? '#FAFAFA' : 'linear-gradient(135deg, #FFFBEB 0%, #FFF7E6 100%)',
+                        opacity: isUsed || isExpired ? 0.7 : 1,
+                        position: 'relative',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {/* Decorative circle */}
+                      {!isUsed && !isExpired && (
+                        <div style={{ position: 'absolute', right: -20, top: '50%', transform: 'translateY(-50%)', width: 60, height: 60, borderRadius: '50%', background: 'rgba(245,158,11,0.1)' }} />
+                      )}
+
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+                        {/* Kiri: info kupon */}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                            <span style={{ fontFamily: 'monospace', fontSize: 15, fontWeight: 900, color: isUsed || isExpired ? '#94A3B8' : '#92400E', letterSpacing: 1 }}>
+                              {coupon.code}
+                            </span>
+                            <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 99, background: statusBg, color: statusColor }}>
+                              {statusLabel}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: '#B45309', marginBottom: 4 }}>
+                            Diskon {discLabel}
+                          </div>
+                          <div style={{ fontSize: 11, color: '#94A3B8', display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                            <span>🛍️ Untuk Training & Webinar Advanced</span>
+                            {coupon.min_amount > 0 && (
+                              <span>Min. Rp {Number(coupon.min_amount).toLocaleString('id-ID')}</span>
+                            )}
+                            {daysLeft !== null && !isExpired && (
+                              <span style={{ color: daysLeft <= 30 ? '#EF4444' : '#94A3B8' }}>
+                                ⏰ {daysLeft > 0 ? `${daysLeft} hari lagi` : 'Hari ini kadaluarsa'}
+                              </span>
+                            )}
+                            {coupon.valid_until && (
+                              <span>s/d {new Date(coupon.valid_until).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Kanan: tombol copy */}
+                        {!isUsed && !isExpired && (
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(coupon.code).then(() => {
+                                setCopiedCode(coupon.code);
+                                setTimeout(() => setCopiedCode(''), 2000);
+                              });
+                            }}
+                            style={{
+                              padding: '8px 16px', borderRadius: 8, flexShrink: 0,
+                              background: isCopied ? '#059669' : '#F59E0B',
+                              color: 'white', border: 'none',
+                              fontSize: 12, fontWeight: 800, cursor: 'pointer',
+                              transition: 'background 0.2s',
+                              display: 'flex', alignItems: 'center', gap: 6,
+                            }}
+                          >
+                            {isCopied ? '✓ Tersalin!' : '📋 Salin Kode'}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                <div style={{ fontSize: 11, color: '#94A3B8', textAlign: 'center', paddingTop: 4 }}>
+                  💡 Kupon berlaku 1x pakai untuk event Training atau Webinar Advanced
+                </div>
+              </div>
+            )}
+          </div>
+
+
         </div>
       </div>
+
 
       {quizTarget && (
         <QuizModal
