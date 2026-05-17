@@ -25,6 +25,11 @@ async function createTripaySignature(merchantCode, merchantRef, amount, privateK
   return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
+// ── Format Rupiah (Deno tidak support id-ID locale) ───────────
+function fmtRp(n) {
+  return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -75,7 +80,7 @@ serve(async (req) => {
       if (coupon.valid_until && new Date(coupon.valid_until) < new Date()) throw new Error("Kode kupon sudah kadaluarsa");
       if (coupon.valid_from && new Date(coupon.valid_from) > new Date()) throw new Error("Kode kupon belum berlaku");
       if (coupon.max_uses !== null && coupon.current_uses >= coupon.max_uses) throw new Error("Kuota kupon sudah habis");
-      if (coupon.min_amount && baseAmount < coupon.min_amount) throw new Error(`Kupon hanya berlaku untuk transaksi minimal Rp ${coupon.min_amount.toLocaleString('id-ID')}`);
+      if (coupon.min_amount && baseAmount < coupon.min_amount) throw new Error(`Kupon hanya berlaku untuk transaksi minimal Rp ${fmtRp(coupon.min_amount)}`);
       if (coupon.event_ids && coupon.event_ids.length > 0 && !coupon.event_ids.includes(event_id)) throw new Error("Kupon tidak berlaku untuk event ini");
 
       // Hitung nominal diskon
@@ -150,10 +155,9 @@ serve(async (req) => {
     const signature   = await createTripaySignature(TRIPAY_MERCHANT, merchantRef, amount, TRIPAY_PRIV_KEY);
     const expiredTime = Math.floor(Date.now() / 1000) + 3600; // 1 jam
 
-    // Label item: tampilkan info diskon jika ada
     const itemLabel = [
       package_type === "premium" ? `${event.title} (Premium)` : event.title,
-      discountAmount > 0 ? ` [Diskon Rp ${discountAmount.toLocaleString('id-ID')}]` : "",
+      discountAmount > 0 ? ` [Diskon Rp ${fmtRp(discountAmount)}]` : "",
     ].join("");
 
     // ── Hit Tripay via PHP Proxy (IP statis Rumahweb) ────────────

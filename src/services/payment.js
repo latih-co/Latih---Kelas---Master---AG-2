@@ -80,7 +80,9 @@ export async function createPayment(eventId, packageType, paymentMethod = 'QRIS'
   const response = await supabase.functions.invoke('create-payment', { body });
 
   if (response.error) {
-    return { error: response.error.message || 'Gagal membuat pembayaran' };
+    // Supabase wraps non-2xx as FunctionsHttpError — real message is in response.data
+    const actualError = response.data?.error || response.error.message || 'Gagal membuat pembayaran';
+    return { error: actualError };
   }
 
   const data = response.data;
@@ -117,7 +119,7 @@ export async function createUpgradePayment(registrationId, eventId, paymentMetho
     },
   });
 
-  if (response.error) return { error: response.error.message || 'Gagal membuat pembayaran upgrade' };
+  if (response.error) return { error: response.data?.error || response.error.message || 'Gagal membuat pembayaran upgrade' };
   const data = response.data;
   if (!data?.success) return { error: data?.error || 'Tripay menolak transaksi upgrade' };
   return { checkout_url: data.checkout_url, pay_url: data.pay_url, reference: data.reference };
@@ -277,7 +279,7 @@ export async function createResumePayment(registrationId, eventId, packageType, 
     },
   });
 
-  if (response.error) return { error: response.error.message || 'Gagal membuat pembayaran' };
+  if (response.error) return { error: response.data?.error || response.error.message || 'Gagal membuat pembayaran' };
   const data = response.data;
   if (!data?.success) return { error: data?.error || 'Tripay menolak transaksi ini' };
   return { checkout_url: data.checkout_url, reference: data.reference, pay_url: data.pay_url };
