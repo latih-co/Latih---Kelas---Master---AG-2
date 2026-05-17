@@ -36,9 +36,7 @@ DECLARE
   v_rand      text := '';
   v_i         int;
   v_existing  int;
-  v_valid_until timestamptz;
 BEGIN
-  v_valid_until := now() + interval '6 months';
 
   -- Generate kode unik 5 karakter
   LOOP
@@ -76,7 +74,7 @@ BEGIN
     100000,       -- min transaksi Rp 100.000
     1,            -- 1x pakai
     0,
-    v_valid_until,
+    NULL,         -- berlaku selamanya (tidak ada batas waktu)
     true,
     p_user_id,
     ARRAY['training', 'webinar_advanced']
