@@ -44,6 +44,10 @@ export default function AdminDashboard({ onNavigate }) {
   const [userStats,       setUserStats]       = useState([]);
   const [selectedUser,    setSelectedUser]    = useState(null);
   const [userSearch,      setUserSearch]      = useState('');
+  const [coupons,         setCoupons]         = useState([]);
+  const [couponForm,      setCouponForm]      = useState({ code: '', description: '', discount_type: 'percentage', discount_value: '', min_amount: '', max_uses: '', valid_until: '', is_active: true });
+  const [couponLoading,   setCouponLoading]   = useState(false);
+  const [couponMsg,       setCouponMsg]       = useState('');
 
   // Derived filtered arrays
   const filteredRegs = regs.filter(r => {
@@ -129,6 +133,10 @@ export default function AdminDashboard({ onNavigate }) {
       // ── Name change requests ──
       const { data: ncrData } = await getAllNameChangeRequests();
       setNameReqs(ncrData || []);
+
+      // ── Coupons ──
+      const { data: couponsData } = await supabase.from('coupons').select('*').order('created_at', { ascending: false });
+      setCoupons(couponsData || []);
     } catch (err) {
       console.error('[Admin] loadAll error:', err);
     } finally {
@@ -270,6 +278,7 @@ export default function AdminDashboard({ onNavigate }) {
     { id: 'users',         label: '👥 Data User' },
     { id: 'verify_ig',     label: `⚡ Verifikasi IG${pendingIG.length > 0 ? ` (${pendingIG.length})` : ''}` },
     { id: 'name_changes',  label: `✏️ Koreksi Nama${nameReqs.filter(r => r.status === 'pending').length > 0 ? ` (${nameReqs.filter(r => r.status === 'pending').length})` : ''}` },
+    { id: 'coupons',       label: '🎟️ Kupon' },
   ];
 
   const STATUS_COLORS = {
@@ -894,6 +903,141 @@ export default function AdminDashboard({ onNavigate }) {
                   })}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* ── TAB: Kupon ── */}
+          {!loading && tab === 'coupons' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+              <div style={{ fontWeight: 900, fontSize: 20, color: '#0F172A' }}>Manajemen Kupon</div>
+
+              {/* Form tambah kupon */}
+              <div style={{ background: 'white', borderRadius: 16, padding: 24, border: '1px solid #EAF0F6' }}>
+                <div style={{ fontWeight: 800, fontSize: 15, color: '#0F172A', marginBottom: 16 }}>+ Tambah Kupon Baru</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12 }}>
+                  {[
+                    { key: 'code',           label: 'Kode Kupon',          placeholder: 'LATIH50',         type: 'text' },
+                    { key: 'description',    label: 'Keterangan',          placeholder: 'Diskon spesial',  type: 'text' },
+                    { key: 'discount_value', label: 'Nilai Diskon',         placeholder: '50 atau 100000', type: 'number' },
+                    { key: 'min_amount',     label: 'Min. Transaksi (Rp)', placeholder: '0',              type: 'number' },
+                    { key: 'max_uses',       label: 'Batas Pakai',          placeholder: 'Kosong = tanpa batas', type: 'number' },
+                    { key: 'valid_until',    label: 'Berlaku Hingga',       placeholder: '',               type: 'datetime-local' },
+                  ].map(f => (
+                    <div key={f.key}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: '#64748B', marginBottom: 4 }}>{f.label}</div>
+                      <input
+                        type={f.type}
+                        value={couponForm[f.key]}
+                        onChange={e => setCouponForm(p => ({ ...p, [f.key]: e.target.value }))}
+                        placeholder={f.placeholder}
+                        style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 13, outline: 'none' }}
+                      />
+                    </div>
+                  ))}
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#64748B', marginBottom: 4 }}>Tipe Diskon</div>
+                    <select
+                      value={couponForm.discount_type}
+                      onChange={e => setCouponForm(p => ({ ...p, discount_type: e.target.value }))}
+                      style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 13, outline: 'none' }}
+                    >
+                      <option value="percentage">Persentase (%)</option>
+                      <option value="fixed">Nominal Tetap (Rp)</option>
+                    </select>
+                  </div>
+                </div>
+                {couponMsg && (
+                  <div style={{ marginTop: 12, fontSize: 12, color: couponMsg.startsWith('ERR') ? '#DC2626' : '#15803D', fontWeight: 700 }}>
+                    {couponMsg.startsWith('ERR') ? '⚠️ ' + couponMsg.replace('ERR ', '') : '✅ ' + couponMsg.replace('OK ', '')}
+                  </div>
+                )}
+                <button
+                  disabled={couponLoading}
+                  onClick={async () => {
+                    if (!couponForm.code.trim() || !couponForm.discount_value) {
+                      setCouponMsg('ERR Kode dan nilai diskon wajib diisi.');
+                      return;
+                    }
+                    setCouponLoading(true);
+                    setCouponMsg('');
+                    const payload = {
+                      code:           couponForm.code.trim().toUpperCase(),
+                      description:    couponForm.description || null,
+                      discount_type:  couponForm.discount_type,
+                      discount_value: parseFloat(couponForm.discount_value),
+                      min_amount:     couponForm.min_amount ? parseFloat(couponForm.min_amount) : 0,
+                      max_uses:       couponForm.max_uses ? parseInt(couponForm.max_uses) : null,
+                      valid_until:    couponForm.valid_until || null,
+                      is_active:      true,
+                    };
+                    const { error } = await supabase.from('coupons').insert(payload);
+                    setCouponLoading(false);
+                    if (error) { setCouponMsg('ERR ' + (error.message || 'Gagal menyimpan')); return; }
+                    setCouponMsg('OK Kupon berhasil ditambahkan!');
+                    setCouponForm({ code: '', description: '', discount_type: 'percentage', discount_value: '', min_amount: '', max_uses: '', valid_until: '', is_active: true });
+                    await loadAll();
+                  }}
+                  style={{ marginTop: 16, padding: '10px 20px', background: couponLoading ? '#94A3B8' : '#0F172A', color: 'white', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 800, cursor: couponLoading ? 'not-allowed' : 'pointer' }}
+                >
+                  {couponLoading ? 'Menyimpan...' : '+ Simpan Kupon'}
+                </button>
+              </div>
+
+              <div style={{ background: 'white', borderRadius: 16, border: '1px solid #EAF0F6', overflow: 'hidden' }}>
+                <div style={{ padding: '16px 20px', borderBottom: '1px solid #EAF0F6', fontWeight: 800, fontSize: 14, color: '#0F172A' }}>
+                  Daftar Kupon ({coupons.length})
+                </div>
+                {coupons.length === 0 ? (
+                  <div style={{ padding: 32, textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>Belum ada kupon</div>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                      <thead>
+                        <tr style={{ background: '#F8FAFC' }}>
+                          {['Kode', 'Diskon', 'Min.', 'Terpakai/Batas', 'Berlaku Hingga', 'Status', 'Aksi'].map(h => (
+                            <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 700, color: '#64748B', fontSize: 11, whiteSpace: 'nowrap' }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {coupons.map(c => (
+                          <tr key={c.id} style={{ borderTop: '1px solid #EAF0F6' }}>
+                            <td style={{ padding: '10px 14px', fontFamily: 'monospace', fontWeight: 800, color: '#0F172A' }}>{c.code}</td>
+                            <td style={{ padding: '10px 14px', color: '#15803D', fontWeight: 700 }}>
+                              {c.discount_type === 'percentage' ? (c.discount_value + '%') : ('Rp ' + Number(c.discount_value).toLocaleString('id-ID'))}
+                            </td>
+                            <td style={{ padding: '10px 14px', color: '#64748B' }}>
+                              {c.min_amount > 0 ? ('Rp ' + Number(c.min_amount).toLocaleString('id-ID')) : '-'}
+                            </td>
+                            <td style={{ padding: '10px 14px', color: '#64748B' }}>
+                              {c.current_uses} / {c.max_uses != null ? c.max_uses : 'tak terbatas'}
+                            </td>
+                            <td style={{ padding: '10px 14px', color: '#64748B' }}>
+                              {c.valid_until ? new Date(c.valid_until).toLocaleDateString('id-ID') : 'Tidak terbatas'}
+                            </td>
+                            <td style={{ padding: '10px 14px' }}>
+                              <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 99, fontSize: 11, fontWeight: 700, background: c.is_active ? '#DCFCE7' : '#FEE2E2', color: c.is_active ? '#15803D' : '#DC2626' }}>
+                                {c.is_active ? 'Aktif' : 'Nonaktif'}
+                              </span>
+                            </td>
+                            <td style={{ padding: '10px 14px' }}>
+                              <button
+                                onClick={async () => {
+                                  await supabase.from('coupons').update({ is_active: !c.is_active }).eq('id', c.id);
+                                  await loadAll();
+                                }}
+                                style={{ padding: '4px 12px', borderRadius: 6, border: '1px solid #E2E8F0', background: 'white', cursor: 'pointer', fontSize: 11, fontWeight: 700, color: '#0F172A' }}
+                              >
+                                {c.is_active ? 'Nonaktifkan' : 'Aktifkan'}
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

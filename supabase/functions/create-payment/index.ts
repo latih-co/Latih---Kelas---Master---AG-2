@@ -31,7 +31,7 @@ serve(async (req) => {
   }
 
   try {
-    const { event_id, package_type, payment_method, is_upgrade, is_resume, existing_registration_id } = await req.json();
+    const { event_id, package_type, payment_method, is_upgrade, is_resume, existing_registration_id, coupon_code } = await req.json();
 
     // ── Inisialisasi Supabase admin client ──────────────────────
     const supabase = createClient(
@@ -54,11 +54,42 @@ serve(async (req) => {
       .single();
     if (eventError || !event) throw new Error("Event tidak ditemukan");
 
-    // ── Tentukan harga ──────────────────────────────────────────
-    const amount = package_type === "premium"
+    const baseAmount = package_type === "premium"
       ? event.price_premium
       : event.price_regular;
-    if (amount === 0) throw new Error("Event ini gratis, gunakan alur registrasi gratis");
+    if (baseAmount === 0) throw new Error("Event ini gratis, gunakan alur registrasi gratis");
+
+    // ── Validasi & hitung diskon kupon ──────────────────────────
+    let discountAmount = 0;
+    let couponId = null;
+
+    if (coupon_code) {
+      const { data: coupon, error: couponErr } = await supabase
+        .from("coupons")
+        .select("*")
+        .eq("code", coupon_code.toUpperCase())
+        .eq("is_active", true)
+        .single();
+
+      if (couponErr || !coupon) throw new Error("Kode kupon tidak valid atau sudah tidak aktif");
+      if (coupon.valid_until && new Date(coupon.valid_until) < new Date()) throw new Error("Kode kupon sudah kadaluarsa");
+      if (coupon.valid_from && new Date(coupon.valid_from) > new Date()) throw new Error("Kode kupon belum berlaku");
+      if (coupon.max_uses !== null && coupon.current_uses >= coupon.max_uses) throw new Error("Kuota kupon sudah habis");
+      if (coupon.min_amount && baseAmount < coupon.min_amount) throw new Error(`Kupon hanya berlaku untuk transaksi minimal Rp ${coupon.min_amount.toLocaleString('id-ID')}`);
+      if (coupon.event_ids && coupon.event_ids.length > 0 && !coupon.event_ids.includes(event_id)) throw new Error("Kupon tidak berlaku untuk event ini");
+
+      // Hitung nominal diskon
+      if (coupon.discount_type === "percentage") {
+        discountAmount = Math.floor(baseAmount * coupon.discount_value / 100);
+        if (coupon.max_discount) discountAmount = Math.min(discountAmount, coupon.max_discount);
+      } else {
+        discountAmount = coupon.discount_value;
+      }
+      discountAmount = Math.min(discountAmount, baseAmount - 1); // minimal bayar Rp 1
+      couponId = coupon.id;
+    }
+
+    const amount = baseAmount - discountAmount;
 
     // ── Cek / buat registrasi ────────────────────────────────────
     let reg;
@@ -119,6 +150,12 @@ serve(async (req) => {
     const signature   = await createTripaySignature(TRIPAY_MERCHANT, merchantRef, amount, TRIPAY_PRIV_KEY);
     const expiredTime = Math.floor(Date.now() / 1000) + 3600; // 1 jam
 
+    // Label item: tampilkan info diskon jika ada
+    const itemLabel = [
+      package_type === "premium" ? `${event.title} (Premium)` : event.title,
+      discountAmount > 0 ? ` [Diskon Rp ${discountAmount.toLocaleString('id-ID')}]` : "",
+    ].join("");
+
     // ── Hit Tripay via PHP Proxy (IP statis Rumahweb) ────────────
     const tripayRes = await fetch(PROXY_URL, {
       method: "POST",
@@ -137,7 +174,7 @@ serve(async (req) => {
           customer_email: user.email,
           customer_phone: "",
           order_items: [{
-            name:     package_type === "premium" ? `${event.title} (Premium)` : event.title,
+            name:     itemLabel,
             price:    amount,
             quantity: 1,
           }],
@@ -156,7 +193,6 @@ serve(async (req) => {
       throw new Error("Tripay error: " + (tripayData.message || "Unknown"));
     }
 
-    // ── Simpan data payment ─────────────────────────────────────
     await supabase.from("payments").insert({
       registration_id:     reg.id,
       user_id:             user.id,
@@ -166,7 +202,14 @@ serve(async (req) => {
       payment_method:      payment_method || "QRIS",
       status:              "pending",
       is_upgrade:          is_upgrade === true,
+      coupon_id:           couponId,
+      discount_amount:     discountAmount,
     });
+
+    // Jika kupon dipakai, increment current_uses via stored procedure (atomic)
+    if (couponId) {
+      await supabase.rpc("increment_coupon_uses", { p_coupon_id: couponId });
+    }
 
     // Jika Tripay gagal pada mode normal, hapus registrasi yang baru dibuat
     // (pada mode upgrade, registrasi tidak dihapus karena sudah ada)

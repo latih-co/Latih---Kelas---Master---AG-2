@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { PAYMENT_METHODS, createPayment, registerFreeEvent, registerFreeDirectly, getRegistrationStatus, adminRegisterFree, createResumePayment } from '../services/payment';
 import { useUser } from '../context/UserContext';
+import CouponInput from './CouponInput';
 
 const STATUS_INFO = {
   pending:       { label: 'Menunggu Verifikasi',  emoji: '⏳', color: '#D97706', bg: '#FEF3C7' },
@@ -24,13 +25,15 @@ export default function PaymentModal({ event, onClose, onNavigate, initialPackag
 
   const [step, setStep]         = useState('status_check');
   const [regStatus, setRegStatus] = useState(null);
-  const [selectedPkg, setPkg]   = useState(initialPackage); // pre-set dari tombol yang diklik
+  const [selectedPkg, setPkg]   = useState(initialPackage);
   const [selectedMethod, setMethod] = useState('QRIS');
   const [igUsername, setIg]     = useState('');
   const [verifyCode, setVerifyCode] = useState('');
   const [checkoutUrl, setCheckoutUrl] = useState('');
   const [error, setError]       = useState('');
   const [loading, setLoading]   = useState(true);
+  const [couponCode, setCouponCode]   = useState('');
+  const [discountAmount, setDiscountAmount] = useState(0);
 
   const isWebinarReg  = event.type === 'webinar_reguler';
   const isWebinarAdv  = event.type === 'webinar_advanced';
@@ -76,7 +79,7 @@ export default function PaymentModal({ event, onClose, onNavigate, initialPackag
 
   const handlePaidRegister = async () => {
     setLoading(true); setError('');
-    const result = await createPayment(event.id, selectedPkg, selectedMethod);
+    const result = await createPayment(event.id, selectedPkg, selectedMethod, couponCode || null);
     setLoading(false);
     if (result.error) { setError(result.error); return; }
     setCheckoutUrl(result.checkout_url || result.pay_url);
@@ -501,24 +504,42 @@ export default function PaymentModal({ event, onClose, onNavigate, initialPackag
             })}
 
           </div>
+
+          {/* Kode Voucher */}
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#64748B', marginBottom: 8, letterSpacing: '0.05em' }}>KODE VOUCHER (OPSIONAL)</div>
+            <CouponInput
+              eventId={event.id}
+              baseAmount={selectedPkg === 'premium' ? event.price_premium : event.price_regular}
+              onApply={(code, discount) => { setCouponCode(code); setDiscountAmount(discount); }}
+              onRemove={() => { setCouponCode(''); setDiscountAmount(0); }}
+            />
+          </div>
+
           {(() => {
             const basePrice = selectedPkg === 'premium' ? event.price_premium : event.price_regular;
             const selMethod = PAYMENT_METHODS.find(m => m.code === selectedMethod);
             const fee = selMethod?.fee || 0;
-            const total = basePrice + fee;
+            const total = basePrice - discountAmount + fee;
             return (
               <div style={{ background: '#F8FAFC', borderRadius: 10, padding: '12px 16px', marginBottom: 16 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: fee > 0 ? 6 : 0 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
                   <span style={{ fontSize: 12, color: 'var(--c-muted)' }}>Harga</span>
                   <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--c-dark)' }}>{fmtRp(basePrice)}</span>
                 </div>
+                {discountAmount > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <span style={{ fontSize: 12, color: '#16A34A', fontWeight: 700 }}>🎉 Diskon Voucher</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: '#16A34A' }}>- {fmtRp(discountAmount)}</span>
+                  </div>
+                )}
                 {fee > 0 && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
                     <span style={{ fontSize: 12, color: '#F59E0B' }}>Biaya admin</span>
                     <span style={{ fontSize: 12, fontWeight: 600, color: '#F59E0B' }}>+ {fmtRp(fee)}</span>
                   </div>
                 )}
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: fee > 0 ? '1px solid #EAF0F6' : 'none', paddingTop: fee > 0 ? 8 : 0, marginTop: fee > 0 ? 2 : 0 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #EAF0F6', paddingTop: 8, marginTop: 2 }}>
                   <span style={{ fontSize: 13, color: 'var(--c-muted)', fontWeight: 700 }}>Total</span>
                   <span style={{ fontWeight: 900, color: 'var(--c-dark)', fontSize: 18 }}>{fmtRp(total)}</span>
                 </div>

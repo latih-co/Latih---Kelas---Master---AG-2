@@ -66,17 +66,18 @@ export async function simulateUpgrade(registrationId) {
  * @param {string} paymentMethod - Kode metode bayar Tripay (QRIS, BRIVA, dll)
  * @returns {{ checkout_url, reference } | { error }}
  */
-export async function createPayment(eventId, packageType, paymentMethod = 'QRIS') {
+export async function createPayment(eventId, packageType, paymentMethod = 'QRIS', couponCode = null) {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) return { error: 'Belum login' };
 
-  const response = await supabase.functions.invoke('create-payment', {
-    body: {
-      event_id:       eventId,
-      package_type:   packageType,
-      payment_method: paymentMethod,
-    },
-  });
+  const body = {
+    event_id:       eventId,
+    package_type:   packageType,
+    payment_method: paymentMethod,
+  };
+  if (couponCode) body.coupon_code = couponCode.trim().toUpperCase();
+
+  const response = await supabase.functions.invoke('create-payment', { body });
 
   if (response.error) {
     return { error: response.error.message || 'Gagal membuat pembayaran' };
