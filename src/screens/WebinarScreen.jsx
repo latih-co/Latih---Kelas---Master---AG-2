@@ -38,18 +38,20 @@ function WebinarCard({ item, onSelect, isMobile }) {
       {/* Cover Image */}
       {item.image ? (
         <img src={item.image} alt="Webinar"
-          style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', backgroundColor: 'var(--surf-2)' }} />
-      ) : (
-        <div style={{
-          width: '100%', aspectRatio: '1/1',
-          background: isReguler
-            ? 'linear-gradient(135deg, #059669 0%, #34D399 100%)'
-            : 'linear-gradient(135deg, #1D4ED8 0%, #60A5FA 100%)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36,
-        }}>
-          {isReguler ? '🎙️' : '🚀'}
-        </div>
-      )}
+          style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', backgroundColor: 'var(--surf-2)' }}
+          onError={e => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+        />
+      ) : null}
+      <div style={{
+        width: '100%', aspectRatio: '1/1',
+        background: isReguler
+          ? 'linear-gradient(135deg, #059669 0%, #34D399 100%)'
+          : 'linear-gradient(135deg, #1D4ED8 0%, #60A5FA 100%)',
+        display: item.image ? 'none' : 'flex',
+        alignItems: 'center', justifyContent: 'center', fontSize: 36,
+      }}>
+        {isReguler ? '🎙️' : '🚀'}
+      </div>
 
       <div style={{ padding: 14, display: 'flex', flexDirection: 'column', flex: 1 }}>
         {/* Badges row: kategori + sektor */}

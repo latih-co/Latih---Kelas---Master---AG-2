@@ -182,10 +182,14 @@ export default function KelasSertifikasiScreen({ onSelectTraining }) {
               >
                 {/* Cover image */}
                 {item.image ? (
-                  <img src={item.image} alt={item.title} style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', backgroundColor: 'var(--surf-2)' }} />
-                ) : (
-                  <div style={{ width: '100%', aspectRatio: '1/1', backgroundColor: 'var(--surf-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40 }}>🏭</div>
-                )}
+                  <img
+                    src={item.image}
+                    alt={item.title}
+                    style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', backgroundColor: 'var(--surf-2)' }}
+                    onError={e => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                  />
+                ) : null}
+                <div style={{ width: '100%', aspectRatio: '1/1', backgroundColor: 'var(--surf-2)', display: item.image ? 'none' : 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40 }}>🏭</div>
 
                 <div style={{ padding: 14, display: 'flex', flexDirection: 'column', flex: 1 }}>
                   {item.sektor && (

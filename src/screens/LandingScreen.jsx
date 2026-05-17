@@ -278,12 +278,30 @@ export default function LandingScreen({ onNavigate, onTrainingDetail, onWebinarD
                   >
                     {/* Cover Image */}
                     {ev.image_url ? (
-                      <img src={ev.image_url} alt={ev.title} style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', display: 'block' }} />
-                    ) : (
-                      <div style={{ width: '100%', aspectRatio: '1/1', background: isTraining ? 'linear-gradient(135deg, #1D4ED8 0%, #3B82F6 100%)' : isAdv ? 'linear-gradient(135deg, #7C3AED 0%, #A78BFA 100%)' : 'linear-gradient(135deg, #059669 0%, #34D399 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36 }}>
-                        {emoji}
-                      </div>
-                    )}
+                      <img
+                        src={ev.image_url}
+                        alt={ev.title}
+                        style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', display: 'block' }}
+                        onError={e => {
+                          // Gambar gagal load → tampilkan placeholder gradient
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'flex';
+                        }}
+                      />
+                    ) : null}
+                    <div style={{
+                      width: '100%', aspectRatio: '1/1',
+                      background: isTraining
+                        ? 'linear-gradient(135deg, #1D4ED8 0%, #3B82F6 100%)'
+                        : isAdv
+                        ? 'linear-gradient(135deg, #7C3AED 0%, #A78BFA 100%)'
+                        : 'linear-gradient(135deg, #059669 0%, #34D399 100%)',
+                      display: ev.image_url ? 'none' : 'flex',
+                      alignItems: 'center', justifyContent: 'center', fontSize: 36,
+                    }}>
+                      {emoji}
+                    </div>
+
                     {/* Card Body */}
                     <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

@@ -124,7 +124,12 @@ export default function RincianPesananScreen({ paymentRef, onNavigate }) {
                 {/* Event Info */}
                 <div style={{ display: 'flex', gap: 14, marginBottom: 16 }}>
                   {event?.image_url && (
-                    <img src={event.image_url} alt="" style={{ width: 56, height: 56, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }} />
+                    <img
+                      src={event.image_url}
+                      alt=""
+                      style={{ width: 56, height: 56, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }}
+                      onError={e => { e.target.style.display = 'none'; }}
+                    />
                   )}
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 13, fontWeight: 800, color: '#0F172A', lineHeight: 1.4, marginBottom: 4 }}>
